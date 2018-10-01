@@ -17,10 +17,13 @@ find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
 file(COPY ${OGRE_CONFIG_DIR}/resources.cfg DESTINATION ${CMAKE_BINARY_DIR})
 ## [discover_ogre]
 
+
 ADD_EXECUTABLE(proj1
   Bootstrap.cpp
   Ball.cpp
 )
-target_link_libraries(proj1 ${OGRE_LIBRARIES})
+target_link_libraries(proj1 ${OGRE_LIBRARIES}
+/lusr/opt/bullet-2.86)
+
 
 
