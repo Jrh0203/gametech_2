@@ -219,6 +219,7 @@ void TutorialApplication::setup()
     
     std::cout << "ADD TO COLLISION SHAPES"  << std::endl;
     this->physicsEngine->getCollisionShapes().push_back(newRigidShape);
+    std::cout << "Current count: " << this->physicsEngine->getCollisionObjectCount() << std::endl;
  
     //set the initial position and transform. For this demo, we set the tranform to be none
     std::cout << "1"  << std::endl;
@@ -382,14 +383,15 @@ bool TutorialApplication::frameStarted (const Ogre::FrameEvent &evt){
         std::cout << "9"  << std::endl;
 
         for (int i = 0; i< this->physicsEngine->getCollisionObjectCount(); i++) {
-             std::cout << " 10 - " + i  << std::endl;
+             std::cout << " 10 - " << i  << std::endl;
             btCollisionObject* obj = this->physicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
-             std::cout << "  11 - " + i  << std::endl;
+             std::cout << "  11 - " << i  << std::endl;
             btRigidBody* body = btRigidBody::upcast(obj);
 
-            std::cout << "  12 - " + i  << std::endl;
+            std::cout << "  12 - " << i  << std::endl;
  
             if (body && body->getMotionState()){
+                std::cout << "  13 - " << i  << std::endl;
                 btTransform trans;
                 body->getMotionState()->getWorldTransform(trans);
  
@@ -403,6 +405,7 @@ bool TutorialApplication::frameStarted (const Ogre::FrameEvent &evt){
             }
         }
     }
+    std::cout << "Done with frameStarted" << std::endl;
     return true;
 }
 

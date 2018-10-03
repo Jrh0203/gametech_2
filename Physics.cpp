@@ -22,9 +22,12 @@ class Physics{
 	
 	public:
 		btDiscreteDynamicsWorld* getDynamicsWorld() { return dynamicsWorld; }
-		std::vector<btCollisionShape *> getCollisionShapes() { return collisionShapes;}
-		int getCollisionObjectCount() { int size =static_cast<int>(collisionShapes.size());
-			std::cout << "Size: " + size << std::endl;
+		std::vector<btCollisionShape *> &getCollisionShapes() { 
+			std::cout << "gettingCollisionShapes" << std::endl;
+			return collisionShapes;}
+		int getCollisionObjectCount() { 
+			int size =static_cast<int>(collisionShapes.size());
+			std::cout << "Size: " + std::to_string(size) << std::endl;
 			return size; }
 
 
