@@ -335,7 +335,8 @@ bool TutorialApplication::keyReleased(const KeyboardEvent& evt)
 }
 
 void TutorialApplication::frameRendered(const Ogre::FrameEvent & evt ){
-    b->Ball::move(evt);
+    //b->Ball::move(evt);
+    std::cout << "frameRendered" << std::endl;
 
     if (keys[0]==true){
         camNode->translate(0,0,-.1);
@@ -393,10 +394,19 @@ bool TutorialApplication::frameStarted (const Ogre::FrameEvent &evt){
             if (body && body->getMotionState()){
                 std::cout << "  13 - " << i  << std::endl;
                 btTransform trans;
-                body->getMotionState()->getWorldTransform(trans);
+                std::cout << "  about to get worldTransform " << i  << std::endl;
+
+                body->getWorldTransform();
+
+
+
+                std::cout << "  14 - " << i  << std::endl;
  
                 void *userPointer = body->getUserPointer();
+
+                 std::cout << "  15 - " << i  << std::endl;
                 if (userPointer) {
+                     std::cout << "  16 - " << i  << std::endl;
                     btQuaternion orientation = trans.getRotation();
                     Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
                     sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ()));
