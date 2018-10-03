@@ -29,7 +29,6 @@ THE SOFTWARE
 //! [starter]
 
 #include <exception>
-#include <iostream>
 
 #include <Ogre.h>
 #include <OgreApplicationContext.h>
@@ -38,6 +37,7 @@ THE SOFTWARE
 #include <OgreApplicationContext.h>
 #include <OgreCameraMan.h>
 #include "Ball.h"
+#include "Physics.cpp"
 
 using namespace Ogre;
 using namespace OgreBites;
@@ -57,9 +57,11 @@ public:
     bool keyPressed(const KeyboardEvent& evt);
     bool keyReleased(const KeyboardEvent& evt);
     void frameRendered(const Ogre::FrameEvent & evt );
+    bool frameStarted(const Ogre::FrameEvent & evt );
     Ball* b;
     bool* keys = new bool[6];
     SceneNode* camNode;
+    Physics* physicsEngine;
 };
 
 
@@ -82,6 +84,10 @@ void TutorialApplication::setup()
     }
     ApplicationContext::setup();
     addInputListener(this);
+
+    std::cout << "CONSTRUCTING PHYSICS"  << std::endl;
+    physicsEngine = new Physics;
+    std::cout << "PHYSICS  CREATED"  << std::endl;
 
     // get a pointer to the already created root
     Root* root = getRoot();
@@ -136,7 +142,11 @@ void TutorialApplication::setup()
     sphere_scene->setScale(.01, .01, .01);
     sphere_scene->setPosition(0,0,0);
     */
-    b = new Ball(scnMgr);
+
+
+
+
+    //b = new Ball(scnMgr);
 
     Plane plane(Vector3::UNIT_Y, -5);
     //! [planedefine]
@@ -152,7 +162,7 @@ void TutorialApplication::setup()
     Entity** walls_entity = new Entity*[6];
     SceneNode** walls_scene = new SceneNode*[6];
 
-    for (int i = 0; i < 6; i++){
+    for (int i = 0; i < 1; i++){
         std::string name = "plane"+std::to_string(i);
         std::cerr << name << '\n';
         walls_entity[i] = scnMgr->createEntity("plane");
@@ -175,10 +185,75 @@ void TutorialApplication::setup()
         if (i==5){
             walls_scene[i]->roll(Degree(180));
         }
-    }
-    
-    //! [planesetmat]
 
+        //Pretty much everything below here is taken from https://oramind.com/ogre-bullet-a-beginners-basic-guide/
+        btTransform groundTransform;
+        groundTransform.setIdentity();
+        groundTransform.setOrigin(btVector3(0, -55, 0));
+
+        btScalar groundMass(0.);
+        btVector3 localGroundInertia(0, 0, 0);
+
+        btCollisionShape *groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
+        btDefaultMotionState *groundMotionState = new btDefaultMotionState(groundTransform);
+
+        groundShape->calculateLocalInertia(groundMass, localGroundInertia);
+
+        btRigidBody::btRigidBodyConstructionInfo groundRBInfo(groundMass, groundMotionState, groundShape, localGroundInertia);
+        btRigidBody *groundBody = new btRigidBody(groundRBInfo);
+
+        //add the body to the dynamics world
+        this->physicsEngine->getDynamicsWorld()->addRigidBody(groundBody);
+        std::cout << "ADDED GROUND TO DYNAMICS WORLD"  << std::endl;
+    }
+
+    Ogre::Entity *entity = scnMgr->createEntity("ogrehead.mesh");
+ 
+    Ogre::SceneNode *newNode = scnMgr->getRootSceneNode()->createChildSceneNode();
+    newNode->attachObject(entity);
+ 
+    //create the new shape, and tell the physics that is a Box
+    //S
+    std::cout << "  CREATE RIGID SHAPE"  << std::endl;
+    btCollisionShape *newRigidShape = new btBoxShape(btVector3(1.0f, 1.0f, 1.0f));
+    
+    std::cout << "ADD TO COLLISION SHAPES"  << std::endl;
+    this->physicsEngine->getCollisionShapes().push_back(newRigidShape);
+ 
+    //set the initial position and transform. For this demo, we set the tranform to be none
+    std::cout << "1"  << std::endl;
+    btTransform startTransform;
+    startTransform.setIdentity();
+    startTransform.setRotation(btQuaternion(1.0f, 1.0f, 1.0f, 0));
+    std::cout << "2"  << std::endl;
+     
+    //set the mass of the object. a mass of "0" means that it is an immovable object
+    btScalar mass = 0.1f;
+    btVector3 localInertia(0,0,0);
+    std::cout << "3"  << std::endl;
+     
+    startTransform.setOrigin(btVector3(0, 0, 0));
+    newRigidShape->calculateLocalInertia(mass, localInertia);
+
+    std::cout << "4"  << std::endl;
+     
+    //actually contruvc the body and add it to the dynamics world
+    btDefaultMotionState *myMotionState = new btDefaultMotionState(startTransform);
+    
+    std::cout << "5"  << std::endl;
+
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, newRigidShape, localInertia);
+    btRigidBody *body = new btRigidBody(rbInfo);
+    body->setRestitution(1);
+    body->setUserPointer(newNode);
+
+    std::cout << "6"  << std::endl;
+     
+    physicsEngine->getDynamicsWorld()->addRigidBody(body);
+    //physicsEngine->trackRigidBodyWithName(body, physicsCubeName);
+        
+    //! [planesetmat]
+    std::cout << "7"  << std::endl;
     //! [lightingsset]
     scnMgr->setAmbientLight(ColourValue(1, 1, 1));
     scnMgr->setShadowTechnique(ShadowTechnique::SHADOWTYPE_STENCIL_MODULATIVE);
@@ -297,6 +372,38 @@ int main(int argc, char **argv)
     }
 
     return 0;
+}
+
+bool TutorialApplication::frameStarted (const Ogre::FrameEvent &evt){
+    std::cout << "8"  << std::endl;
+    if (this->physicsEngine != NULL){
+        physicsEngine->getDynamicsWorld()->stepSimulation(1.0f/60.0f); //suppose you have 60 frames per second
+ 
+        std::cout << "9"  << std::endl;
+
+        for (int i = 0; i< this->physicsEngine->getCollisionObjectCount(); i++) {
+             std::cout << " 10 - " + i  << std::endl;
+            btCollisionObject* obj = this->physicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
+             std::cout << "  11 - " + i  << std::endl;
+            btRigidBody* body = btRigidBody::upcast(obj);
+
+            std::cout << "  12 - " + i  << std::endl;
+ 
+            if (body && body->getMotionState()){
+                btTransform trans;
+                body->getMotionState()->getWorldTransform(trans);
+ 
+                void *userPointer = body->getUserPointer();
+                if (userPointer) {
+                    btQuaternion orientation = trans.getRotation();
+                    Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
+                    sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ()));
+                    sceneNode->setOrientation(Ogre::Quaternion(orientation.getW(), orientation.getX(), orientation.getY(), orientation.getZ()));
+                }
+            }
+        }
+    }
+    return true;
 }
 
 //! [starter]
