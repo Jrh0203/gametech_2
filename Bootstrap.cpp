@@ -84,11 +84,14 @@ public:
     bool keyPressed(const KeyboardEvent& evt);
     bool keyReleased(const KeyboardEvent& evt);
     void frameRendered(const Ogre::FrameEvent & evt );
-    bool frameStarted(const Ogre::FrameEvent & evt );
+    //bool frameStarted(const FrameEvent &evt);
+    void setupScene(SceneManager* mSceneMgr);
     void createBulletSim();
+    ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName);
     Ball* b;
     bool* keys = new bool[6];
     SceneNode* camNode;
+
     Physics* physicsEngine;
 
 
@@ -102,17 +105,43 @@ public:
     SceneNode *boxNode;
 };
 
+ManualObject* TutorialApplication::createCubeMesh(Ogre::String name, Ogre::String matName) {
 
-TutorialApplication::TutorialApplication()
-    : ApplicationContext("OgreTutorialApp")
-{
+   ManualObject* cube = new ManualObject(name);
+
+   cube->begin(matName);
+
+   cube->position(0.5,-0.5,1.0);cube->normal(0.408248,-0.816497,0.408248);cube->textureCoord(1,0);
+   cube->position(-0.5,-0.5,0.0);cube->normal(-0.408248,-0.816497,-0.408248);cube->textureCoord(0,1);
+   cube->position(0.5,-0.5,0.0);cube->normal(0.666667,-0.333333,-0.666667);cube->textureCoord(1,1);
+   cube->position(-0.5,-0.5,1.0);cube->normal(-0.666667,-0.333333,0.666667);cube->textureCoord(0,0);
+   cube->position(0.5,0.5,1.0);cube->normal(0.666667,0.333333,0.666667);cube->textureCoord(1,0);
+   cube->position(-0.5,-0.5,1.0);cube->normal(-0.666667,-0.333333,0.666667);cube->textureCoord(0,1);
+   cube->position(0.5,-0.5,1.0);cube->normal(0.408248,-0.816497,0.408248);cube->textureCoord(1,1);
+   cube->position(-0.5,0.5,1.0);cube->normal(-0.408248,0.816497,0.408248);cube->textureCoord(0,0);
+   cube->position(-0.5,0.5,0.0);cube->normal(-0.666667,0.333333,-0.666667);cube->textureCoord(0,1);
+   cube->position(-0.5,-0.5,0.0);cube->normal(-0.408248,-0.816497,-0.408248);cube->textureCoord(1,1);
+   cube->position(-0.5,-0.5,1.0);cube->normal(-0.666667,-0.333333,0.666667);cube->textureCoord(1,0);
+   cube->position(0.5,-0.5,0.0);cube->normal(0.666667,-0.333333,-0.666667);cube->textureCoord(0,1);
+   cube->position(0.5,0.5,0.0);cube->normal(0.408248,0.816497,-0.408248);cube->textureCoord(1,1);
+   cube->position(0.5,-0.5,1.0);cube->normal(0.408248,-0.816497,0.408248);cube->textureCoord(0,0);
+   cube->position(0.5,-0.5,0.0);cube->normal(0.666667,-0.333333,-0.666667);cube->textureCoord(1,0);
+   cube->position(-0.5,-0.5,0.0);cube->normal(-0.408248,-0.816497,-0.408248);cube->textureCoord(0,0);
+   cube->position(-0.5,0.5,1.0);cube->normal(-0.408248,0.816497,0.408248);cube->textureCoord(1,0);
+   cube->position(0.5,0.5,0.0);cube->normal(0.408248,0.816497,-0.408248);cube->textureCoord(0,1);
+   cube->position(-0.5,0.5,0.0);cube->normal(-0.666667,0.333333,-0.666667);cube->textureCoord(1,1);
+   cube->position(0.5,0.5,1.0);cube->normal(0.666667,0.333333,0.666667);cube->textureCoord(0,0);
+
+   cube->triangle(0,1,2);      cube->triangle(3,1,0);
+   cube->triangle(4,5,6);      cube->triangle(4,7,5);
+   cube->triangle(8,9,10);      cube->triangle(10,7,8);
+   cube->triangle(4,11,12);   cube->triangle(4,13,11);
+   cube->triangle(14,8,12);   cube->triangle(14,15,8);
+   cube->triangle(16,17,18);   cube->triangle(16,19,17);
+   cube->end();
+
+   return cube;
 }
-
-
-TutorialApplication::~TutorialApplication()
-{
-}
-
 
 
 void TutorialApplication::createBulletSim(void) {
@@ -194,7 +223,71 @@ void TutorialApplication::createBulletSim(void) {
 
                 dynamicsWorld->addRigidBody(body);
         }
+}
+
+void TutorialApplication::setupScene(SceneManager* mSceneMgr)
+    {
+        //mSceneMgr = mRoot->createSceneManager(ST_GENERIC, "Default SceneManager");
+        //Camera *cam = mSceneMgr->createCamera("Camera");
+        //Viewport *vp = mRoot->getAutoCreatedWindow()->addViewport(cam);
+
+        Entity *ent;
+
+        //mSceneMgr->setAmbientLight(ColourValue(0.25, 0.25, 0.25));
+        //mSceneMgr->setShadowTechnique( SHADOWTYPE_STENCIL_ADDITIVE );
+
+        // make a cube to bounce around
+
+        
+        ManualObject *cmo = createCubeMesh("manual", "");
+        cmo->convertToMesh("cube");
+        ent = mSceneMgr->createEntity("Cube", "cube.mesh");
+        ent->setCastShadows(true);
+        boxNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        boxNode->attachObject(ent);
+        boxNode->setScale(Vector3(0.05,0.05,0.05)); // for some reason converttomesh multiplied dimensions by 10
+        
+
+        // make a rock wall on the floor
+        
+        Plane plane(Vector3::UNIT_Y, 0);
+        MeshManager::getSingleton().createPlane("ground",
+                    ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
+                    150,150,20,20,true,1,5,5,Vector3::UNIT_Z);
+        ent = mSceneMgr->createEntity("GroundEntity", "ground");
+        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
+        ent->setMaterialName("Examples/Rockwall");
+
+        ent->setCastShadows(false);
+        
+        
+
+
+        // make a light to see stuff with
+        /*
+        Light *light = mSceneMgr->createLight("Light1");
+        light->setType(Light::LT_POINT);
+        light->setPosition(Vector3(250, 150, 250));
+        light->setDiffuseColour(ColourValue::White);
+        light->setSpecularColour(ColourValue::White);
+        */
+
+        // Create the scene node
+        //SceneNode *node = mSceneMgr->getRootSceneNode()->createChildSceneNode("CamNode1", Vector3(-200, 100, 200));
+        //node->yaw(Degree(-45));
+        //node->attachObject(cam);
     }
+
+
+TutorialApplication::TutorialApplication()
+    : ApplicationContext("OgreTutorialApp")
+{
+}
+
+
+TutorialApplication::~TutorialApplication()
+{
+}
 
 
 void TutorialApplication::setup()
@@ -205,10 +298,6 @@ void TutorialApplication::setup()
     }
     ApplicationContext::setup();
     addInputListener(this);
-
-    std::cout << "CONSTRUCTING PHYSICS"  << std::endl;
-    physicsEngine = new Physics;
-    std::cout << "PHYSICS  CREATED"  << std::endl;
 
     // get a pointer to the already created root
     Root* root = getRoot();
@@ -225,8 +314,9 @@ void TutorialApplication::setup()
     //! [cameracreate]
 
     //! [cameraposition]
-    camNode->setPosition(0, 0, 20);
-    camNode->lookAt(Vector3(0, 0, -300), Node::TransformSpace::TS_WORLD);
+    camNode->setPosition(-20, 10, 20);
+    camNode->yaw(Degree(-45));
+    //camNode->lookAt(Vector3(0, 0, -300), Node::TransformSpace::TS_WORLD);
     //! [cameraposition]
 
     //! [cameralaststep]
@@ -251,7 +341,7 @@ void TutorialApplication::setup()
     lightNode->attachObject(light);
     lightNode->setPosition(0, 10, 0);
 
-    scnMgr->setSkyBox(true, "Examples/MorningSkyBox", 5000, false);
+    //scnMgr->setSkyBox(true, "Examples/MorningSkyBox", 5000, false);
     //! [ninja]
     /*
     Entity* sphereEntity = scnMgr->createEntity("sphere.mesh");
@@ -262,10 +352,16 @@ void TutorialApplication::setup()
     sphere_scene->attachObject(sphereEntity);
     sphere_scene->setScale(.01, .01, .01);
     sphere_scene->setPosition(0,0,0);
+
+
     */
+    //! [lightingsset]
+    scnMgr->setAmbientLight(ColourValue(1, 1, 1));
+    scnMgr->setShadowTechnique(ShadowTechnique::SHADOWTYPE_STENCIL_MODULATIVE);
+    //! [lightingsset]
 
-
-
+    setupScene(scnMgr);
+    
 
     //b = new Ball(scnMgr);
 
@@ -283,7 +379,7 @@ void TutorialApplication::setup()
     Entity** walls_entity = new Entity*[6];
     SceneNode** walls_scene = new SceneNode*[6];
 
-    for (int i = 0; i < 1; i++){
+    for (int i = 0; i < 0; i++){
         std::string name = "plane"+std::to_string(i);
         std::cerr << name << '\n';
         walls_entity[i] = scnMgr->createEntity("plane");
@@ -306,80 +402,13 @@ void TutorialApplication::setup()
         if (i==5){
             walls_scene[i]->roll(Degree(180));
         }
-
-        //Pretty much everything below here is taken from https://oramind.com/ogre-bullet-a-beginners-basic-guide/
-        btTransform groundTransform;
-        groundTransform.setIdentity();
-        groundTransform.setOrigin(btVector3(0, -55, 0));
-
-        btScalar groundMass(0.);
-        btVector3 localGroundInertia(0, 0, 0);
-
-        btCollisionShape *groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
-        btDefaultMotionState *groundMotionState = new btDefaultMotionState(groundTransform);
-
-        groundShape->calculateLocalInertia(groundMass, localGroundInertia);
-
-        btRigidBody::btRigidBodyConstructionInfo groundRBInfo(groundMass, groundMotionState, groundShape, localGroundInertia);
-        btRigidBody *groundBody = new btRigidBody(groundRBInfo);
-
-        //add the body to the dynamics world
-        this->physicsEngine->getDynamicsWorld()->addRigidBody(groundBody);
-        std::cout << "ADDED GROUND TO DYNAMICS WORLD"  << std::endl;
     }
-
-    Ogre::Entity *entity = scnMgr->createEntity("ogrehead.mesh");
- 
-    Ogre::SceneNode *newNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-    newNode->attachObject(entity);
- 
-    //create the new shape, and tell the physics that is a Box
-    //S
-    std::cout << "  CREATE RIGID SHAPE"  << std::endl;
-    btCollisionShape *newRigidShape = new btBoxShape(btVector3(1.0f, 1.0f, 1.0f));
     
-    std::cout << "ADD TO COLLISION SHAPES"  << std::endl;
-    this->physicsEngine->getCollisionShapes().push_back(newRigidShape);
-    std::cout << "Current count: " << this->physicsEngine->getCollisionObjectCount() << std::endl;
- 
-    //set the initial position and transform. For this demo, we set the tranform to be none
-    std::cout << "1"  << std::endl;
-    btTransform startTransform;
-    startTransform.setIdentity();
-    startTransform.setRotation(btQuaternion(1.0f, 1.0f, 1.0f, 0));
-    std::cout << "2"  << std::endl;
-     
-    //set the mass of the object. a mass of "0" means that it is an immovable object
-    btScalar mass = 0.1f;
-    btVector3 localInertia(0,0,0);
-    std::cout << "3"  << std::endl;
-     
-    startTransform.setOrigin(btVector3(0, 0, 0));
-    newRigidShape->calculateLocalInertia(mass, localInertia);
-
-    std::cout << "4"  << std::endl;
-     
-    //actually contruvc the body and add it to the dynamics world
-    btDefaultMotionState *myMotionState = new btDefaultMotionState(startTransform);
-    
-    std::cout << "5"  << std::endl;
-
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, newRigidShape, localInertia);
-    btRigidBody *body = new btRigidBody(rbInfo);
-    body->setRestitution(1);
-    body->setUserPointer(newNode);
-
-    std::cout << "6"  << std::endl;
-     
-    physicsEngine->getDynamicsWorld()->addRigidBody(body);
-    //physicsEngine->trackRigidBodyWithName(body, physicsCubeName);
-        
     //! [planesetmat]
-    std::cout << "7"  << std::endl;
-    //! [lightingsset]
-    scnMgr->setAmbientLight(ColourValue(1, 1, 1));
-    scnMgr->setShadowTechnique(ShadowTechnique::SHADOWTYPE_STENCIL_MODULATIVE);
-    //! [lightingsset]
+
+    
+
+    
 }
 
 
@@ -456,8 +485,8 @@ bool TutorialApplication::keyReleased(const KeyboardEvent& evt)
 }
 
 void TutorialApplication::frameRendered(const Ogre::FrameEvent & evt ){
+    
     //b->Ball::move(evt);
-    std::cout << "frameRendered" << std::endl;
 
     if (keys[0]==true){
         camNode->translate(0,0,-.1);
@@ -477,6 +506,10 @@ void TutorialApplication::frameRendered(const Ogre::FrameEvent & evt ){
     if (keys[5]==true){
         camNode->translate(0,-.1,0);
     }
+    //dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,50);
+    //return true;
+    //return mContinue;
+    dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
 }
 
 int main(int argc, char **argv)
@@ -485,6 +518,7 @@ int main(int argc, char **argv)
     {
         TutorialApplication app;
         app.initApp();
+        app.createBulletSim();
         app.getRoot()->startRendering();
         app.closeApp();
     }
@@ -497,47 +531,5 @@ int main(int argc, char **argv)
     return 0;
 }
 
-bool TutorialApplication::frameStarted (const Ogre::FrameEvent &evt){
-    std::cout << "8"  << std::endl;
-    if (this->physicsEngine != NULL){
-        physicsEngine->getDynamicsWorld()->stepSimulation(1.0f/60.0f); //suppose you have 60 frames per second
- 
-        std::cout << "9"  << std::endl;
-
-        for (int i = 0; i< this->physicsEngine->getCollisionObjectCount(); i++) {
-             std::cout << " 10 - " << i  << std::endl;
-            btCollisionObject* obj = this->physicsEngine->getDynamicsWorld()->getCollisionObjectArray()[i];
-             std::cout << "  11 - " << i  << std::endl;
-            btRigidBody* body = btRigidBody::upcast(obj);
-
-            std::cout << "  12 - " << i  << std::endl;
- 
-            if (body && body->getMotionState()){
-                std::cout << "  13 - " << i  << std::endl;
-                btTransform trans;
-                std::cout << "  about to get worldTransform " << i  << std::endl;
-
-                body->getWorldTransform();
-
-
-
-                std::cout << "  14 - " << i  << std::endl;
- 
-                void *userPointer = body->getUserPointer();
-
-                 std::cout << "  15 - " << i  << std::endl;
-                if (userPointer) {
-                     std::cout << "  16 - " << i  << std::endl;
-                    btQuaternion orientation = trans.getRotation();
-                    Ogre::SceneNode *sceneNode = static_cast<Ogre::SceneNode *>(userPointer);
-                    sceneNode->setPosition(Ogre::Vector3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ()));
-                    sceneNode->setOrientation(Ogre::Quaternion(orientation.getW(), orientation.getX(), orientation.getY(), orientation.getZ()));
-                }
-            }
-        }
-    }
-    std::cout << "Done with frameStarted" << std::endl;
-    return true;
-}
-
 //! [starter]
+
