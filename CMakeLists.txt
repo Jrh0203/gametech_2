@@ -23,6 +23,8 @@ include_directories(/lusr/opt/bullet-2.86/include/bullet
 ADD_EXECUTABLE(proj2
   Bootstrap.cpp
   Ball.cpp
+  Object.cpp
+  Paddle.cpp
 )
 target_link_libraries(proj2 ${OGRE_LIBRARIES}
 BulletDynamics BulletCollision LinearMath )

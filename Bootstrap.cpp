@@ -29,7 +29,6 @@ THE SOFTWARE
 //! [starter]
 
 #include <exception>
-#include <iostream>
 
 #include <Ogre.h>
 #include <OgreApplicationContext.h>
@@ -39,40 +38,16 @@ THE SOFTWARE
 #include <OgreCameraMan.h>
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
+//#include "Object.cpp"
+#include "Paddle.cpp"
 #include "Ball.h"
 
 using namespace Ogre;
 using namespace OgreBites;
 
 int i = 0;
-Camera* cam;
 
-class MyMotionState : public btMotionState {
-public:
-    MyMotionState(const btTransform &initialpos, Ogre::SceneNode *node) {
-        mVisibleobj = node;
-        mPos1 = initialpos;
-    }
-    virtual ~MyMotionState() {    }
-    void setNode(Ogre::SceneNode *node) {
-        mVisibleobj = node;
-    }
-    virtual void getWorldTransform(btTransform &worldTrans) const {
-        worldTrans = mPos1;
-    }
-    virtual void setWorldTransform(const btTransform &worldTrans) {
-        if(NULL == mVisibleobj) return; // silently return before we set a node
-        btQuaternion rot = worldTrans.getRotation();
-        mVisibleobj->setOrientation(rot.w(), rot.x(), rot.y(), rot.z());
-        btVector3 pos = worldTrans.getOrigin();
-        // TODO **** XXX need to fix this up such that it renders properly since this doesnt know the scale of the node
-        // also the getCube function returns a cube that isnt centered on Z
-        mVisibleobj->setPosition(pos.x(), pos.y()+5, pos.z()-5);
-    }
-protected:
-    Ogre::SceneNode *mVisibleobj;
-    btTransform mPos1;
-};
+Camera* cam;
 
 class TutorialApplication
         : public ApplicationContext
@@ -111,7 +86,6 @@ public:
     SceneNode *ballNode;
     btRigidBody* ballrb;
 };
-
 ManualObject* TutorialApplication::createCubeMesh(Ogre::String name, Ogre::String matName) {
 
    ManualObject* cube = new ManualObject(name);
@@ -149,6 +123,8 @@ ManualObject* TutorialApplication::createCubeMesh(Ogre::String name, Ogre::Strin
 
    return cube;
 }
+
+
 
 ManualObject* TutorialApplication::createPaddleMesh(Ogre::String name, Ogre::String matName) {
 
@@ -191,22 +167,22 @@ ManualObject* TutorialApplication::createPaddleMesh(Ogre::String name, Ogre::Str
 
 void TutorialApplication::createBulletSim(void) {
         ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-        collisionConfiguration = new btDefaultCollisionConfiguration();
+        // collisionConfiguration = new btDefaultCollisionConfiguration();
 
-        ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-        dispatcher = new    btCollisionDispatcher(collisionConfiguration);
+        // ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
+        // dispatcher = new    btCollisionDispatcher(collisionConfiguration);
 
-        ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-        overlappingPairCache = new btDbvtBroadphase();
+        // ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
+        // overlappingPairCache = new btDbvtBroadphase();
 
-        ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
-        solver = new btSequentialImpulseConstraintSolver;
+        // ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
+        // solver = new btSequentialImpulseConstraintSolver;
 
-        dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
-        //dynamicsWorld->setGravity(btVector3(0,-10,0));
+        // dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
+        // //dynamicsWorld->setGravity(btVector3(0,-10,0));
 
-        ///create a few basic rigid bodies
-        // start with ground plane, 1500, 1500
+        // ///create a few basic rigid bodies
+        // // start with ground plane, 1500, 1500
         btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(1500.),btScalar(1.),btScalar(1500.)));
 
         collisionShapes.push_back(groundShape);
@@ -236,133 +212,126 @@ void TutorialApplication::createBulletSim(void) {
         }
 
 
-        {
-            //create my paddle
-            btCollisionShape* colShape = new btBoxShape(btVector3(2.5,2.5,2.5));
-  //            btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-            collisionShapes.push_back(colShape);
+  //       {
+  //           //create my paddle
+  //           btCollisionShape* colShape = new btBoxShape(btVector3(2.5,2.5,2.5));
+  // //            btCollisionShape* colShape = new btSphereShape(btScalar(1.));
+  //           collisionShapes.push_back(colShape);
 
-            /// Create Dynamic Objects
-            btTransform startTransform;
-            startTransform.setIdentity();
+  //           /// Create Dynamic Objects
+  //           btTransform startTransform;
+  //           startTransform.setIdentity();
 
-            btScalar    mass(1.f);
+  //           btScalar    mass(1.f);
 
-            //rigidbody is dynamic if and only if mass is non zero, otherwise static
-            bool isDynamic = (mass != 0.f);
+  //           //rigidbody is dynamic if and only if mass is non zero, otherwise static
+  //           bool isDynamic = (mass != 0.f);
 
-            btVector3 localInertia(0,0,0);
-            if (isDynamic)
-                colShape->calculateLocalInertia(mass,localInertia);
+  //           btVector3 localInertia(0,0,0);
+  //           if (isDynamic)
+  //               colShape->calculateLocalInertia(mass,localInertia);
 
-                startTransform.setOrigin(btVector3(0,0, 40));
-                // *** give it a slight twist so it bouncees more interesting
-                startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.0));
+  //               startTransform.setOrigin(btVector3(0,0, 40));
+  //               // *** give it a slight twist so it bouncees more interesting
+  //               startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.0));
 
-                //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-                //btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-                MyMotionState* motionState = new MyMotionState(startTransform, boxNode);
-                btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,colShape,localInertia);
-                btRigidBody* body = new btRigidBody(rbInfo);
+  //               //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+  //               //btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+  //               MyMotionState* motionState = new MyMotionState(startTransform, boxNode);
+  //               btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,colShape,localInertia);
+  //               btRigidBody* body = new btRigidBody(rbInfo);
 
-                dynamicsWorld->addRigidBody(body);
-        }
+  //               dynamicsWorld->addRigidBody(body);
+  //       }
 
-        //add second box 
-        {
-            //create second paddle
-            btCollisionShape* boxShape = new btBoxShape(btVector3(2.5,2.5,2.5));
-  //            btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-            collisionShapes.push_back(boxShape);
+  //       //add second box 
+  //       {
+  //           //create second paddle
+  //           btCollisionShape* boxShape = new btBoxShape(btVector3(2.5,2.5,2.5));
+  // //            btCollisionShape* colShape = new btSphereShape(btScalar(1.));
+  //           collisionShapes.push_back(boxShape);
 
-            /// Create Dynamic Objects
-            btTransform startTransform;
-            startTransform.setIdentity();
+  //           /// Create Dynamic Objects
+  //           btTransform startTransform;
+  //           startTransform.setIdentity();
 
-            btScalar    mass(1.f);
+  //           btScalar    mass(1.f);
 
-            //rigidbody is dynamic if and only if mass is non zero, otherwise static
-            bool isDynamic = (mass != 0.f);
+  //           //rigidbody is dynamic if and only if mass is non zero, otherwise static
+  //           bool isDynamic = (mass != 0.f);
 
-            btVector3 localInertia(0,0,0.0);
-            if (isDynamic)
-                boxShape->calculateLocalInertia(mass,localInertia);
+  //           btVector3 localInertia(0,0,0.0);
+  //           if (isDynamic)
+  //               boxShape->calculateLocalInertia(mass,localInertia);
 
-                startTransform.setOrigin(btVector3(0,0,-40));
-                // *** give it a slight twist so it bouncees more interesting
-                startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.0));
+  //               startTransform.setOrigin(btVector3(0,0,-40));
+  //               // *** give it a slight twist so it bouncees more interesting
+  //               startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.0));
 
-                //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-                //btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-                MyMotionState* motionState = new MyMotionState(startTransform, boxNode2);
-                btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,boxShape,localInertia);
-                btRigidBody* body = new btRigidBody(rbInfo);
+  //               //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+  //               //btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+  //               MyMotionState* motionState = new MyMotionState(startTransform, boxNode2);
+  //               btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,boxShape,localInertia);
+  //               btRigidBody* body = new btRigidBody(rbInfo);
 
-                dynamicsWorld->addRigidBody(body);
-         } 
-                {
-            btCollisionShape* ballShape = new btSphereShape(btScalar(1));
-            collisionShapes.push_back(ballShape);
-
-            btTransform startTransform;
-            startTransform.setIdentity();
-
-            btScalar mass(1.f);
-            bool isDynamic = (mass != 0.f);
-
-            btVector3 localInertia(0,0,-1.0);
-            if (isDynamic)
-                ballShape->calculateLocalInertia(mass, localInertia);
-
-            startTransform.setOrigin(btVector3(0, 15, 0));
-
-            MyMotionState* motionState = new MyMotionState(startTransform, ballNode);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, ballShape, localInertia);
-            btRigidBody* body = new btRigidBody(rbInfo);
-
-            ballrb = body;
-            dynamicsWorld->addRigidBody(body);
-        }
+  //               dynamicsWorld->addRigidBody(body);
+  //        } 
 
 }
 
 void TutorialApplication::setupScene(SceneManager* mSceneMgr)
     {
+
+        //set up all the necessary collision objects
+        collisionConfiguration = new btDefaultCollisionConfiguration();
+
+        ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
+        dispatcher = new    btCollisionDispatcher(collisionConfiguration);
+
+        ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
+        overlappingPairCache = new btDbvtBroadphase();
+
+        ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
+        solver = new btSequentialImpulseConstraintSolver;
+
+        dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
+        //dynamicsWorld->setGravity(btVector3(0,-10,0));
+
+        ///create a few basic rigid bodies
+        // start with ground plane, 1500, 1500
+        //btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(1500.),btScalar(1.),btScalar(1500.)));
+
         //mSceneMgr = mRoot->createSceneManager(ST_GENERIC, "Default SceneManager");
         //Camera *cam = mSceneMgr->createCamera("Camera");
         //Viewport *vp = mRoot->getAutoCreatedWindow()->addViewport(cam);
 
-        Entity *ent;
 
         //mSceneMgr->setAmbientLight(ColourValue(0.25, 0.25, 0.25));
         //mSceneMgr->setShadowTechnique( SHADOWTYPE_STENCIL_ADDITIVE );
 
         // make a cube to bounce around
-        
-        ManualObject *cmo = createCubeMesh("manual", "");
+        Ogre::ManualObject *cmo = createCubeMesh("manual", "");
         cmo->convertToMesh("cube");
-        ent = mSceneMgr->createEntity("Cube", "cube.mesh");
-        ent->setCastShadows(true);
-        boxNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-        boxNode->attachObject(ent);
-        boxNode->setScale(Vector3(0.05,0.05,0.05)); // for some reason converttomesh multiplied dimensions by 10
-        
-      
-        ent = mSceneMgr->createEntity("Cube2", "cube.mesh");
-        ent->setCastShadows(true);
-        boxNode2 = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-        boxNode2->attachObject(ent);
-        boxNode2->setScale(Vector3(0.05,0.05,0.05)); // for some reason converttomesh multiplied dimensions by 10
+        //ent = scnMgr->createEntity("cube.mesh");
+        Paddle* paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40), mSceneMgr->createEntity("cube.mesh"));
+        collisionShapes.push_back(paddle1->getCollisionShape());
+        boxNode = paddle1->getNode();
+        boxNode->setScale(Vector3(0.05,0.05,0.05));
+        dynamicsWorld->addRigidBody(paddle1->getRigidBody());
 
-        
-        ent = mSceneMgr->createEntity("ball", "sphere.mesh");
-        ent->setCastShadows(true);
-        ballNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-        ballNode->attachObject(ent);
-        ballNode->setScale(Vector3(0.01,0.01,0.01));
+        Paddle* paddle2 = new Paddle(mSceneMgr, btVector3(0, 0, -40), mSceneMgr->createEntity("cube.mesh"));
+        collisionShapes.push_back(paddle2->getCollisionShape());
+        boxNode2 = paddle2->getNode();
+        boxNode2->setScale(Vector3(0.05,0.05,0.05));
+        dynamicsWorld->addRigidBody(paddle2->getRigidBody());
+    
+        Object* ball = new Object(mSceneMgr);
+        collisionShapes.push_back(ball->getCollisionShape());
+        ballNode = ball->getNode();
+        dynamicsWorld->addRigidBody(ball->getRigidBody());
 
         // make a rock wall on the floor
-        
+        Entity* ent;
         Plane plane(Vector3::UNIT_Y, 0);
         MeshManager::getSingleton().createPlane("ground",
                     ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
@@ -374,7 +343,7 @@ void TutorialApplication::setupScene(SceneManager* mSceneMgr)
         ent->setCastShadows(false);
         
         
-
+            std::cout << "end of set up" <<std::endl;
 
         // make a light to see stuff with
         /*
@@ -391,16 +360,17 @@ void TutorialApplication::setupScene(SceneManager* mSceneMgr)
         //node->attachObject(cam);
     }
 
-void TutorialApplication::reset() { 
-    btTransform initialTransform;
+// void TutorialApplication::reset() { 
+//     btTransform initialTransform;
 
-    initialTransform.setOrigin(btVector3(0.0, 5.0, 0.0));
+//     initialTransform.setOrigin(btVector3(0.0, 5.0, 0.0));
 
-    ballrb->setWorldTransform(initialTransform);
+//     ballrb->setWorldTransform(initialTransform);
 
-    //ballNode->setPosition(Ogre::Vector3(0, 5.0, 0));
-    //ballrb->applyCentralImpulse(btVector3(0.5, 0, 0.5)); 
-}
+//     //ballrb->setLinearVelocity(btVector3(0.0, 10, 0));
+//     //ballNode->setPosition(Ogre::Vector3(0, 5.0, 0));
+//     //ballrb->applyCentralImpulse(btVector3(0.5, 0, 0.5)); 
+// }
 
 
 TutorialApplication::TutorialApplication()
@@ -543,10 +513,10 @@ bool TutorialApplication::keyPressed(const KeyboardEvent& evt)
     {
         getRoot()->queueEndRendering();
     }
-    if (evt.keysym.sym == 'r')
-     {
-         reset();
-     }
+    // if (evt.keysym.sym == 'r')
+    //  {
+    //      reset();
+    //  }
     if (evt.keysym.sym == 'w')
     {
         keys[0]=true;
