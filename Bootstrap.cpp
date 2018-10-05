@@ -29,6 +29,7 @@ THE SOFTWARE
 //! [starter]
 
 #include <exception>
+#include <iostream>
 
 #include <Ogre.h>
 #include <OgreApplicationContext.h>
@@ -36,8 +37,9 @@ THE SOFTWARE
 #include <OgreRTShaderSystem.h>
 #include <OgreApplicationContext.h>
 #include <OgreCameraMan.h>
+#include "btBulletCollisionCommon.h"
+#include "btBulletDynamicsCommon.h"
 #include "Ball.h"
-#include "Physics.cpp"
 
 using namespace Ogre;
 using namespace OgreBites;
@@ -88,13 +90,15 @@ public:
     void setupScene(SceneManager* mSceneMgr);
     void createBulletSim();
     ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName);
+    ManualObject* createPaddleMesh(Ogre::String name, Ogre::String matName);
+    void reset();
+    
+
     Ball* b;
     bool* keys = new bool[6];
     SceneNode* camNode;
 
-    Physics* physicsEngine;
-
-
+    //Physics* physicsEngine;
     btDefaultCollisionConfiguration* collisionConfiguration;
     btCollisionDispatcher* dispatcher;
     btBroadphaseInterface* overlappingPairCache;
@@ -103,6 +107,9 @@ public:
     btCollisionShape* groundShape;
     btAlignedObjectArray<btCollisionShape*> collisionShapes;
     SceneNode *boxNode;
+    SceneNode *boxNode2;
+    SceneNode *ballNode;
+    btRigidBody* ballrb;
 };
 
 ManualObject* TutorialApplication::createCubeMesh(Ogre::String name, Ogre::String matName) {
@@ -143,6 +150,44 @@ ManualObject* TutorialApplication::createCubeMesh(Ogre::String name, Ogre::Strin
    return cube;
 }
 
+ManualObject* TutorialApplication::createPaddleMesh(Ogre::String name, Ogre::String matName) {
+
+   ManualObject* paddle = new ManualObject(name);
+
+   paddle->begin(matName);
+
+   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(1,0);
+   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(0,1);
+   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(1,1);
+   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(0,0);
+   paddle->position(0.5,0.5,1.0);paddle->normal(0.666667,0.333333,0.666667);paddle->textureCoord(1,0);
+   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(0,1);
+   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(1,1);
+   paddle->position(-0.5,0.5,1.0);paddle->normal(-0.408248,0.816497,0.408248);paddle->textureCoord(0,0);
+   paddle->position(-0.5,0.5,0.0);paddle->normal(-0.666667,0.333333,-0.666667);paddle->textureCoord(0,1);
+   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(1,1);
+   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(1,0);
+   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(0,1);
+   paddle->position(0.5,0.5,0.0);paddle->normal(0.408248,0.816497,-0.408248);paddle->textureCoord(1,1);
+   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(0,0);
+   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(1,0);
+   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(0,0);
+   paddle->position(-0.5,0.5,1.0);paddle->normal(-0.408248,0.816497,0.408248);paddle->textureCoord(1,0);
+   paddle->position(0.5,0.5,0.0);paddle->normal(0.408248,0.816497,-0.408248);paddle->textureCoord(0,1);
+   paddle->position(-0.5,0.5,0.0);paddle->normal(-0.666667,0.333333,-0.666667);paddle->textureCoord(1,1);
+   paddle->position(0.5,0.5,1.0);paddle->normal(0.666667,0.333333,0.666667);paddle->textureCoord(0,0);
+
+   paddle->triangle(0,1,2);      paddle->triangle(3,1,0);
+   paddle->triangle(4,5,6);      paddle->triangle(4,7,5);
+   paddle->triangle(8,9,10);      paddle->triangle(10,7,8);
+   paddle->triangle(4,11,12);   paddle->triangle(4,13,11);
+   paddle->triangle(14,8,12);   paddle->triangle(14,15,8);
+   paddle->triangle(16,17,18);   paddle->triangle(16,19,17);
+   paddle->end();
+
+   return paddle;
+}
+
 
 void TutorialApplication::createBulletSim(void) {
         ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
@@ -158,7 +203,7 @@ void TutorialApplication::createBulletSim(void) {
         solver = new btSequentialImpulseConstraintSolver;
 
         dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
-        dynamicsWorld->setGravity(btVector3(0,-10,0));
+        //dynamicsWorld->setGravity(btVector3(0,-10,0));
 
         ///create a few basic rigid bodies
         // start with ground plane, 1500, 1500
@@ -168,7 +213,7 @@ void TutorialApplication::createBulletSim(void) {
 
         btTransform groundTransform;
         groundTransform.setIdentity();
-        groundTransform.setOrigin(btVector3(0,-2,0));
+        groundTransform.setOrigin(btVector3(0,-6,0));
 
         {
             btScalar mass(0.);
@@ -192,9 +237,8 @@ void TutorialApplication::createBulletSim(void) {
 
 
         {
-            //create a dynamic rigidbody
-
-            btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
+            //create my paddle
+            btCollisionShape* colShape = new btBoxShape(btVector3(2.5,2.5,2.5));
   //            btCollisionShape* colShape = new btSphereShape(btScalar(1.));
             collisionShapes.push_back(colShape);
 
@@ -207,13 +251,13 @@ void TutorialApplication::createBulletSim(void) {
             //rigidbody is dynamic if and only if mass is non zero, otherwise static
             bool isDynamic = (mass != 0.f);
 
-            btVector3 localInertia(0,0,-1.0);
+            btVector3 localInertia(0,0,0);
             if (isDynamic)
                 colShape->calculateLocalInertia(mass,localInertia);
 
-                startTransform.setOrigin(btVector3(0,250,0));
+                startTransform.setOrigin(btVector3(0,0, 40));
                 // *** give it a slight twist so it bouncees more interesting
-                startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.6));
+                startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.0));
 
                 //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
                 //btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
@@ -223,6 +267,63 @@ void TutorialApplication::createBulletSim(void) {
 
                 dynamicsWorld->addRigidBody(body);
         }
+
+        //add second box 
+        {
+            //create second paddle
+            btCollisionShape* boxShape = new btBoxShape(btVector3(2.5,2.5,2.5));
+  //            btCollisionShape* colShape = new btSphereShape(btScalar(1.));
+            collisionShapes.push_back(boxShape);
+
+            /// Create Dynamic Objects
+            btTransform startTransform;
+            startTransform.setIdentity();
+
+            btScalar    mass(1.f);
+
+            //rigidbody is dynamic if and only if mass is non zero, otherwise static
+            bool isDynamic = (mass != 0.f);
+
+            btVector3 localInertia(0,0,0.0);
+            if (isDynamic)
+                boxShape->calculateLocalInertia(mass,localInertia);
+
+                startTransform.setOrigin(btVector3(0,0,-40));
+                // *** give it a slight twist so it bouncees more interesting
+                startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.0));
+
+                //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+                //btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+                MyMotionState* motionState = new MyMotionState(startTransform, boxNode2);
+                btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,boxShape,localInertia);
+                btRigidBody* body = new btRigidBody(rbInfo);
+
+                dynamicsWorld->addRigidBody(body);
+         } 
+                {
+            btCollisionShape* ballShape = new btSphereShape(btScalar(1));
+            collisionShapes.push_back(ballShape);
+
+            btTransform startTransform;
+            startTransform.setIdentity();
+
+            btScalar mass(1.f);
+            bool isDynamic = (mass != 0.f);
+
+            btVector3 localInertia(0,0,-1.0);
+            if (isDynamic)
+                ballShape->calculateLocalInertia(mass, localInertia);
+
+            startTransform.setOrigin(btVector3(0, 15, 0));
+
+            MyMotionState* motionState = new MyMotionState(startTransform, ballNode);
+            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, ballShape, localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+
+            ballrb = body;
+            dynamicsWorld->addRigidBody(body);
+        }
+
 }
 
 void TutorialApplication::setupScene(SceneManager* mSceneMgr)
@@ -237,7 +338,6 @@ void TutorialApplication::setupScene(SceneManager* mSceneMgr)
         //mSceneMgr->setShadowTechnique( SHADOWTYPE_STENCIL_ADDITIVE );
 
         // make a cube to bounce around
-
         
         ManualObject *cmo = createCubeMesh("manual", "");
         cmo->convertToMesh("cube");
@@ -247,13 +347,26 @@ void TutorialApplication::setupScene(SceneManager* mSceneMgr)
         boxNode->attachObject(ent);
         boxNode->setScale(Vector3(0.05,0.05,0.05)); // for some reason converttomesh multiplied dimensions by 10
         
+      
+        ent = mSceneMgr->createEntity("Cube2", "cube.mesh");
+        ent->setCastShadows(true);
+        boxNode2 = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        boxNode2->attachObject(ent);
+        boxNode2->setScale(Vector3(0.05,0.05,0.05)); // for some reason converttomesh multiplied dimensions by 10
+
+        
+        ent = mSceneMgr->createEntity("ball", "sphere.mesh");
+        ent->setCastShadows(true);
+        ballNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+        ballNode->attachObject(ent);
+        ballNode->setScale(Vector3(0.01,0.01,0.01));
 
         // make a rock wall on the floor
         
         Plane plane(Vector3::UNIT_Y, 0);
         MeshManager::getSingleton().createPlane("ground",
                     ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
-                    150,150,20,20,true,1,5,5,Vector3::UNIT_Z);
+                    150,100,20,20,true,1,5,5,Vector3::UNIT_Z);
         ent = mSceneMgr->createEntity("GroundEntity", "ground");
         mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
         ent->setMaterialName("Examples/Rockwall");
@@ -277,6 +390,17 @@ void TutorialApplication::setupScene(SceneManager* mSceneMgr)
         //node->yaw(Degree(-45));
         //node->attachObject(cam);
     }
+
+void TutorialApplication::reset() { 
+    btTransform initialTransform;
+
+    initialTransform.setOrigin(btVector3(0.0, 5.0, 0.0));
+
+    ballrb->setWorldTransform(initialTransform);
+
+    //ballNode->setPosition(Ogre::Vector3(0, 5.0, 0));
+    //ballrb->applyCentralImpulse(btVector3(0.5, 0, 0.5)); 
+}
 
 
 TutorialApplication::TutorialApplication()
@@ -314,8 +438,8 @@ void TutorialApplication::setup()
     //! [cameracreate]
 
     //! [cameraposition]
-    camNode->setPosition(-20, 10, 20);
-    camNode->yaw(Degree(-45));
+    camNode->setPosition(0, 30, 75);
+    //camNode->yaw(Degree(-45));
     //camNode->lookAt(Vector3(0, 0, -300), Node::TransformSpace::TS_WORLD);
     //! [cameraposition]
 
@@ -420,9 +544,9 @@ bool TutorialApplication::keyPressed(const KeyboardEvent& evt)
         getRoot()->queueEndRendering();
     }
     if (evt.keysym.sym == 'r')
-    {
-        b->Ball::reset();
-    }
+     {
+         reset();
+     }
     if (evt.keysym.sym == 'w')
     {
         keys[0]=true;
@@ -487,6 +611,9 @@ bool TutorialApplication::keyReleased(const KeyboardEvent& evt)
 void TutorialApplication::frameRendered(const Ogre::FrameEvent & evt ){
     
     //b->Ball::move(evt);
+    if (cam && ballNode){
+        cam->lookAt(ballNode->getPosition());
+    }
 
     if (keys[0]==true){
         camNode->translate(0,0,-.1);

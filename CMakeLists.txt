@@ -17,15 +17,15 @@ find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
 file(COPY ${OGRE_CONFIG_DIR}/resources.cfg DESTINATION ${CMAKE_BINARY_DIR})
 ## [discover_ogre]
 
-include_directories(/lusr/opt/bullet-2.86/include/bullet)
+include_directories(/lusr/opt/bullet-2.86/include/bullet
+)
 
-ADD_EXECUTABLE(proj1
+ADD_EXECUTABLE(proj2
   Bootstrap.cpp
   Ball.cpp
-  Physics.cpp
 )
-target_link_libraries(proj1 ${OGRE_LIBRARIES}
-BulletDynamics BulletCollision LinearMath)
+target_link_libraries(proj2 ${OGRE_LIBRARIES}
+BulletDynamics BulletCollision LinearMath )
 
 
 
