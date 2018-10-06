@@ -1,0 +1,157 @@
+/*
+-----------------------------------------------------------------------------
+Filename:    BaseApplication.h
+-----------------------------------------------------------------------------
+
+This source file is part of the
+   ___                 __    __ _ _    _
+  /___\__ _ _ __ ___  / / /\ \ (_) | _(_)
+ //  // _` | '__/ _ \ \ \/  \/ / | |/ / |
+/ \_// (_| | | |  __/  \  /\  /| |   <| |
+\___/ \__, |_|  \___|   \/  \/ |_|_|\_\_|
+      |___/
+Tutorial Framework (for Ogre 1.9)
+http://www.ogre3d.org/wiki/
+-----------------------------------------------------------------------------
+*/
+
+#ifndef __Bootstrap_h_
+#define __Bootstrap_h_
+
+#include <OgreEntity.h>
+#include <OgreLogManager.h>
+#include <OgreRoot.h>
+#include <OgreViewport.h>
+#include <OgreSceneManager.h>
+#include <OgreRenderWindow.h>
+#include <OgreConfigFile.h>
+
+#include <OgreWindowEventUtilities.h>
+#include <OgreFrameListener.h>
+#include <Overlay/OgreOverlaySystem.h>
+#include <OgreCamera.h>
+
+#include "btBulletCollisionCommon.h"
+#include "btBulletDynamicsCommon.h"
+#include "Paddle.cpp"
+
+#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
+#  include <OIS/OISEvents.h>
+#  include <OIS/OISInputManager.h>
+#  include <OIS/OISKeyboard.h>
+#  include <OIS/OISMouse.h>
+
+#else
+#  include <OISEvents.h>
+#  include <OISInputManager.h>
+#  include <OISKeyboard.h>
+#  include <OISMouse.h>
+
+#endif
+
+#ifdef OGRE_STATIC_LIB
+#  define OGRE_STATIC_GL
+#  if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+#    define OGRE_STATIC_Direct3D9
+// D3D10 will only work on vista, so be careful about statically linking
+#    if OGRE_USE_D3D10
+#      define OGRE_STATIC_Direct3D10
+#    endif
+#  endif
+#  define OGRE_STATIC_BSPSceneManager
+#  define OGRE_STATIC_ParticleFX
+#  define OGRE_STATIC_CgProgramManager
+#  ifdef OGRE_USE_PCZ
+#    define OGRE_STATIC_PCZSceneManager
+#    define OGRE_STATIC_OctreeZone
+#  else
+#    define OGRE_STATIC_OctreeSceneManager
+#  endif
+#  include "OgreStaticPluginLoader.h"
+#endif
+
+//---------------------------------------------------------------------------
+
+class TutorialApplication : 
+    public Ogre::FrameListener, public Ogre::WindowEventListener, 
+    public OIS::KeyListener, public OIS::MouseListener
+{
+public:
+    TutorialApplication(void);
+    ~TutorialApplication(void);
+
+    void go(void);
+
+protected:
+    bool setup();
+    bool configure(void);
+    void chooseSceneManager(void);
+    void createCamera(void);
+    void createFrameListener(void);
+    void createScene(void); // Override me!
+    void destroyScene(void);
+    void createViewports(void);
+    void setupResources(void);
+    void loadResources(void);
+    bool frameRenderingQueued(const Ogre::FrameEvent& evt);
+
+    bool keyPressed(const OIS::KeyEvent &arg);
+    bool keyReleased(const OIS::KeyEvent &arg);
+    void createBulletSim(void);
+    bool mouseMoved(const OIS::MouseEvent &arg);
+    bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+    bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+
+    Ogre::ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName);
+    Ogre::ManualObject* createPaddleMesh(Ogre::String name, Ogre::String matName);
+
+    // Adjust mouse clipping area
+    void windowResized(Ogre::RenderWindow* rw);
+    // Unattach OIS before window shutdown (very important under Linux)
+    void windowClosed(Ogre::RenderWindow* rw);
+
+    Ogre::Root*                 mRoot;
+    Ogre::Camera*               mCamera;
+    Ogre::SceneNode*            mCamNode;
+    Ogre::SceneManager*         mSceneMgr;
+    Ogre::RenderWindow*         mWindow;
+    Ogre::String                mResourcesCfg;
+    Ogre::String                mPluginsCfg;
+
+    Ogre::OverlaySystem*        mOverlaySystem;
+
+    bool                        mCursorWasVisible;	// Was cursor visible before dialog appeared?
+    bool                        mShutDown;
+
+    //OIS Input devices
+    OIS::InputManager*          mInputManager;
+    OIS::Mouse*                 mMouse;
+    OIS::Keyboard*              mKeyboard;
+
+    // Added for Mac compatibility
+    Ogre::String                 m_ResourcePath;
+    bool* keys;
+
+    btDefaultCollisionConfiguration* collisionConfiguration;
+    btCollisionDispatcher* dispatcher;
+    btBroadphaseInterface* overlappingPairCache;
+    btSequentialImpulseConstraintSolver* solver;
+    btDiscreteDynamicsWorld* dynamicsWorld;
+    btCollisionShape* groundShape;
+    btAlignedObjectArray<btCollisionShape*> collisionShapes;
+
+    Paddle *paddle1;
+    Paddle *paddle2;
+    Object *ball;
+
+
+#ifdef OGRE_STATIC_LIB
+    Ogre::StaticPluginLoader m_StaticPluginLoader;
+#endif
+};
+
+//---------------------------------------------------------------------------
+
+#endif // #ifndef __Bootstrap_h_
+
+//---------------------------------------------------------------------------
