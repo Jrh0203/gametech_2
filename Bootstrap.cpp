@@ -96,16 +96,16 @@ void TutorialApplication::createBulletSim(){
 void TutorialApplication::createScene()
     {
 
-        paddle1 = new Paddle(mSceneMgr, btVector3(0, -4, 40));
+        paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40));
         collisionShapes.push_back(paddle1->getCollisionShape());
         dynamicsWorld->addRigidBody(paddle1->getRigidBody());
 
-        paddle2 = new Paddle(mSceneMgr, btVector3(0, -4, -40));
+        paddle2 = new Paddle(mSceneMgr, btVector3(0, 0, -40));
         collisionShapes.push_back(paddle2->getCollisionShape());
         dynamicsWorld->addRigidBody(paddle2->getRigidBody());
    
         //make ball
-        ball = new Ball(mSceneMgr, btVector3(0, 5, 0));
+        ball = new Ball(mSceneMgr, btVector3(0, 0, 0));
         collisionShapes.push_back(ball->getCollisionShape());
         //ballNode = ball->getNode();
         dynamicsWorld->addRigidBody(ball->getRigidBody());
@@ -293,7 +293,6 @@ bool TutorialApplication::setup()
 
     //! [lightingsset]
     mSceneMgr->setAmbientLight(Ogre::ColourValue(1, 1, 1));
-    //mSceneMgr->setShadowTechnique(Ogre::ShadowTechnique::SHADOWTYPE_STENCIL_MODULATIVE);
     //! [lightingsset
 
     createBulletSim();
@@ -301,56 +300,44 @@ bool TutorialApplication::setup()
     setupGUI();
     createFrameListener();
     
-  
-    // Ogre::Plane plane(Ogre::Vector3::UNIT_Y, -5);
-    // //! [planedefine]
-    // Ogre::MeshManager::getSingleton().createPlane(
-    //         "plane",
-    //         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-    //         plane,
-    //         10, 10, 20, 20,
-    //         true,
-    //         1, 5, 5,
-    //         Ogre::Vector3::UNIT_Z);
-
-    //Ogre::Entity** walls_entity = new Ogre::Entity*[6];
-    //Ogre::SceneNode** walls_scene = new Ogre::SceneNode*[6];
-
-/*
-    for (int i = 0; i < 6; i++){
-        std::string name = "plane";
-        std::cerr << name << i << '\n';
-        walls_entity[i] = mSceneMgr->createEntity("plane");
-        walls_scene[i] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-        walls_scene[i]->attachObject(walls_entity[i]);
-        walls_entity[i]->setCastShadows(false);
-        walls_entity[i]->setMaterialName("Examples/Rockwall");
-        if (i==1){
-            walls_scene[i]->roll(Ogre::Degree(90));
-        }
-        if (i==2){
-            walls_scene[i]->roll(Ogre::Degree(-90));
-        }
-        if (i==3){
-            walls_scene[i]->pitch(Ogre::Degree(90));
-        }
-        if (i==4){
-            walls_scene[i]->pitch(Ogre::Degree(-90));
-        }
-        if (i==5){
-            walls_scene[i]->roll(Ogre::Degree(180));
-        }
-    }
-
-    std::cout << "About to look at walls" << std::endl;
-    mCamera->lookAt(walls_scene[0]->getPosition());*/
-    
     //! [planesetmat] */
     return true;
 }
 
 void TutorialApplication::destroyScene(void)
 {
+}
+
+void TutorialApplication::updateScore(void){
+
+    int ballZ = ball->getNode()->getPosition().z;
+
+    if (ballZ < -40){
+        playerScore++;
+    } else {
+        opponentScore++;
+    }
+
+    reset();
+
+    if (playerScore == 7 || opponentScore == 7){
+        //gameover
+
+        newGame();
+    }
+
+}
+
+void TutorialApplication::reset(void){
+    ball->reset(); 
+    paddle1->reset(); 
+    paddle2->reset();
+}
+
+void TutorialApplication::newGame(void){
+    reset();
+    playerScore = 0;
+    opponentScore = 0;
 }
 
 
@@ -368,7 +355,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_Q:  keys[5]=true; break;
       case OIS::KC_LEFT: keys[6]=true; break;
       case OIS::KC_RIGHT: keys[7]=true; break;
-      case OIS::KC_R: ball->reset(); paddle1->reset(); paddle2->reset(); break;
+      case OIS::KC_R: reset(); break;
       case OIS::KC_SPACE: ball->push();
     }
 
@@ -443,6 +430,10 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
     if (paddle2 && ball){
         paddle2->updatePosition(ball->getNode()->getPosition());
+    }
+
+    if (!(ball->inBounds())){
+      updateScore();
     }
 
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);

@@ -1,24 +1,27 @@
 class Ball : public Object { 
 
 protected:
+	int color;
 
 public: 
 	Ball(Ogre::SceneManager* scnMgr, btVector3 vector) : Object(scnMgr){
+
+		startPos = vector;
 		
 		ent = scnMgr->createEntity("sphere.mesh");
 
 		node = scnMgr->getRootSceneNode()->createChildSceneNode();
 		node->attachObject(ent);
-		node->setScale(Ogre::Vector3(0.01,0.01,0.01));
+		node->setScale(Ogre::Vector3(0.04,0.04,0.04));
 
-		colShape = new btSphereShape(btScalar(1));
+		colShape = new btSphereShape(btScalar(4));
 
 		btTransform startTransform;
         startTransform.setIdentity();
 
-        mass = btScalar(0.1f);
+        mass = btScalar(.1f);
 
-        btVector3 localInertia(0,0,-1.0);
+        btVector3 localInertia(0,0,0);
         
         if (isDynamic())
             colShape->calculateLocalInertia(mass, localInertia);
@@ -32,29 +35,22 @@ public:
         body->setRestitution(1.0);
         body->setFriction(0.0);
         body->setDamping(0, 0);
+        color = 0;
 	}
 
 	~Ball(){}; 
 
-	void reset(){
-		btVector3 zeroVector(0,0,0);
-
-		body->clearForces();
-		body->setLinearVelocity(zeroVector);
-		body->setAngularVelocity(zeroVector);
-
-		
-		btTransform transform;
-		transform.setIdentity();
-
-		transform.setOrigin(zeroVector);
-
-		body->setWorldTransform(transform);
-		motionState->setWorldTransform(transform);
-	}
-
 	void push(){
 		body->activate(true);
 		body->applyCentralImpulse( btVector3(1, 0, 3));
+	}
+
+	bool inBounds(){ 
+		return (node->getPosition().z < 40 
+			&& node->getPosition().z > -40); 
+	}
+
+	void explode(){
+		reset();
 	}
 };

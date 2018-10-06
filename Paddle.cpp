@@ -3,9 +3,14 @@
 
 class Paddle : public Object { 
 
+protected:
+	int color;
+
 public: 
 	Paddle (Ogre::SceneManager* scnMgr, btVector3 vector) 
 	: Object(scnMgr) {
+
+	startPos = vector;
 
 	 Ogre::ManualObject *cmo = createCubeMesh("manual", "");
     cmo->convertToMesh("cube");
@@ -24,7 +29,7 @@ public:
 
     mass = btScalar(50.f);
 
-    btVector3 localInertia(0,0,-1.0);
+    btVector3 localInertia(0,0,0);
         
     if (isDynamic())
         colShape->calculateLocalInertia(mass, localInertia);
@@ -41,9 +46,6 @@ public:
  
 	~Paddle(){}
 
-	void swing(){
-		//swing the paddle or something idk
-	}
 
 	void moveLeft(){
 
@@ -70,6 +72,8 @@ public:
 	void updatePosition(Ogre::Vector3 ballPos){
 
 		Ogre::Vector3 myPos = node->getPosition();
+
+		body->activate(true);
 
 		if (ballPos.x < myPos.x){
 			body->setLinearVelocity(btVector3(-15, 0, 0));

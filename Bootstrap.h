@@ -110,6 +110,11 @@ protected:
     bool mouseMoved(const OIS::MouseEvent &arg);
     bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
     bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+
+    void newGame(void);
+    void updateScore(void);
+    void reset(void);
+
     bool quit(const CEGUI::EventArgs& e);
 
     CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
@@ -155,6 +160,11 @@ protected:
     Paddle *paddle2;
     Ball *ball;
     Wall **walls;
+
+    //score
+    int rounds;
+    int playerScore;
+    int opponentScore;
 
     //GUI
     CEGUI::OgreRenderer* mRenderer;
