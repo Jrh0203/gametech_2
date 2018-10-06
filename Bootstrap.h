@@ -37,6 +37,7 @@ http://www.ogre3d.org/wiki/
 //#include "Object.cpp"
 #include "Paddle.cpp"
 #include "Ball.cpp"
+#include "Wall.cpp"
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 #  include <OIS/OISEvents.h>
@@ -156,6 +157,7 @@ protected:
     Paddle *paddle1;
     Paddle *paddle2;
     Ball *ball;
+    Wall *ground;
 
     //GUI
     CEGUI::OgreRenderer* mRenderer;

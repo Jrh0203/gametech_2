@@ -16,7 +16,7 @@ public:
 		btTransform startTransform;
         startTransform.setIdentity();
 
-        mass = btScalar(1.f);
+        mass = btScalar(0.1f);
 
         btVector3 localInertia(0,0,-1.0);
         
@@ -28,6 +28,10 @@ public:
         motionState = new MyMotionState(startTransform, node);
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, colShape, localInertia);
         body = new btRigidBody(rbInfo);
+
+        body->setRestitution(1.0);
+        body->setFriction(0.0);
+        body->setDamping(0, 0);
 	}
 
 	~Ball(){}; 
@@ -51,6 +55,6 @@ public:
 
 	void push(){
 		body->activate(true);
-		body->applyCentralImpulse( btVector3(0, 0, -50));
+		body->applyCentralImpulse( btVector3(1, 0, 3));
 	}
 };

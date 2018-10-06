@@ -29,6 +29,8 @@ public:
     motionState = new MyMotionState(startTransform, node);
     btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, colShape, localInertia);
     body = new btRigidBody(rbInfo);
+    body->setRestitution(1.0);
+    body->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 
 	}
  
@@ -40,21 +42,8 @@ public:
 
 	void moveLeft(){
 
-		/*
-		btTransform oldTransform;
-
-		motionState->getWorldTransform(oldTransform);
-		btVector3 oldOrigin = oldTransform.getOrigin();
-
-		btTransform newTransform;
-		newTransform.setIdentity();
-
-		newTransform.setOrigin(btVector3(oldOrigin.getX()-0.05, oldOrigin.getY(), oldOrigin.getZ()));
-
-		body->setWorldTransform(newTransform);
-		motionState->setWorldTransform(newTransform);*/
 		body->activate(true);
-		btVector3 lvelocity(-10, 0, 0);
+		btVector3 lvelocity(-15, 0, 0);
 		body->setLinearVelocity(lvelocity);
 
 	}
@@ -62,7 +51,7 @@ public:
 	void moveRight(){
 
 		body->activate(true);
-		btVector3 lvelocity(10, 0, 0);
+		btVector3 lvelocity(15, 0, 0);
 		body->setLinearVelocity(lvelocity);
 
 	}

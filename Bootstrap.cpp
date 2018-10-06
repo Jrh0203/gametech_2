@@ -109,39 +109,6 @@ Ogre::ManualObject* TutorialApplication::createPaddleMesh(Ogre::String name, Ogr
    return paddle;
 }
 
-
-void TutorialApplication::createBulletSim(void) {
-  
-        btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(1500.),btScalar(1.),btScalar(1500.)));
-
-        collisionShapes.push_back(groundShape);
-
-        btTransform groundTransform;
-        groundTransform.setIdentity();
-        groundTransform.setOrigin(btVector3(0,-6,0));
-
-        {
-            btScalar mass(0.);
-
-            //rigidbody is dynamic if and only if mass is non zero, otherwise static
-            bool isDynamic = (mass != 0.f);
-
-            btVector3 localInertia(0,0,0);
-            if (isDynamic)
-                groundShape->calculateLocalInertia(mass,localInertia);
-
-            // lathe - this plane isnt going to be moving so i dont care about setting the motion state
-            //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,groundShape,localInertia);
-            btRigidBody* body = new btRigidBody(rbInfo);
-
-            //add the body to the dynamics world
-            dynamicsWorld->addRigidBody(body);
-        }
-
-}
-
 bool TutorialApplication::configure(void)
 {
     // Show the configuration dialog and initialise the system.
@@ -175,7 +142,6 @@ void TutorialApplication::createScene()
         dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
 
 
-
         // Make paddles
         Ogre::ManualObject *cmo = createCubeMesh("manual", "");
         cmo->convertToMesh("cube");
@@ -188,24 +154,17 @@ void TutorialApplication::createScene()
         collisionShapes.push_back(paddle2->getCollisionShape());
         dynamicsWorld->addRigidBody(paddle2->getRigidBody());
    
+        //make ball
         ball = new Ball(mSceneMgr, btVector3(0, 5, 0));
         collisionShapes.push_back(ball->getCollisionShape());
         //ballNode = ball->getNode();
         dynamicsWorld->addRigidBody(ball->getRigidBody());
 
 
-
-        // make a rock wall on the floor
-        Ogre::Entity* ent;
-        Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
-        Ogre::MeshManager::getSingleton().createPlane("ground",
-                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane,
-                    150,100,20,20,true,1,5,5,Ogre::Vector3::UNIT_Z);
-        ent = mSceneMgr->createEntity("GroundEntity", "ground");
-        mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(ent);
-        ent->setMaterialName("Examples/Rockwall");
-
-        ent->setCastShadows(false);
+        //make ground
+        ground = new Wall(mSceneMgr, btVector3(0,-6,0), Ogre::Degree(0), Ogre::Degree(0));
+        collisionShapes.push_back(ground->getCollisionShape());
+        dynamicsWorld->addRigidBody(ground->getRigidBody());
   }
 
 
@@ -362,39 +321,6 @@ void TutorialApplication::setupGUI(){
         CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
 }
 
-/*
-void TutorialApplication::setupRoom(){
-
-    btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(1500.),btScalar(1.),btScalar(1500.)));
-
-    collisionShapes.push_back(groundShape);
-
-    btTransform groundTransform;
-    groundTransform.setIdentity();
-    groundTransform.setOrigin(btVector3(0,-6,0));
-
-    {
-      btScalar mass(0.);
-
-      //rigidbody is dynamic if and only if mass is non zero, otherwise static
-      bool isDynamic = (mass != 0.f);
-
-            btVector3 localInertia(0,0,0);
-            if (isDynamic)
-                groundShape->calculateLocalInertia(mass,localInertia);
-
-            // lathe - this plane isnt going to be moving so i dont care about setting the motion state
-            //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,groundShape,localInertia);
-            btRigidBody* body = new btRigidBody(rbInfo);
-
-            //add the body to the dynamics world
-            dynamicsWorld->addRigidBody(body);
-        }
-
-}*/
-
 
 bool TutorialApplication::setup()
 {
@@ -434,7 +360,6 @@ bool TutorialApplication::setup()
     //! [lightingsset
 
     createScene();
-    createBulletSim();
     setupGUI();
     createFrameListener();
     
@@ -489,7 +414,7 @@ void TutorialApplication::destroyScene(void)
 
 bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
 {
-    std::cerr << "Key! " << '\n';
+    //std::cerr << "Key! " << '\n';
 
     switch(arg.key){
       case OIS::KC_ESCAPE: mShutDown = true; break;
@@ -515,7 +440,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
 bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg)
 {
   
-    std::cerr << "Key! " << '\n';
+    //std::cerr << "Key! " << '\n';
     switch(arg.key){
       case OIS::KC_ESCAPE: mShutDown = true; break;
       case OIS::KC_W:  keys[0]=false; break;
@@ -524,8 +449,8 @@ bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg)
       case OIS::KC_D:  keys[3]=false; break;
       case OIS::KC_E:  keys[4]=false; break;
       case OIS::KC_Q:  keys[5]=false; break;
-      case OIS::KC_LEFT: keys[6]=false; break;
-      case OIS::KC_RIGHT: keys[7]=false; break;
+      case OIS::KC_LEFT: keys[6]=false; paddle1->stop(); break;
+      case OIS::KC_RIGHT: keys[7]=false; paddle1->stop(); break;
     }  
     
 
@@ -574,15 +499,12 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
        paddle1->moveRight();
     }
 
+    /*
     if (!(keys[6] || keys[7])){
       paddle1->stop();
-    }
+    }*/
 
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
-
-    //dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,50);
-    //return true;
-    //return mContinue;
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
     return true;
 }
