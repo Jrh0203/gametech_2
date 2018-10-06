@@ -9,6 +9,7 @@ protected:
 	btCollisionShape* colShape;
 	btScalar mass;
 	MyMotionState* motionState;
+	btVector3 startPos;
 
 public: 
 	Object(Ogre::SceneManager* scnMgr){}
@@ -24,5 +25,22 @@ public:
 	bool isDynamic() { return (mass != 0.f); }
 
 	MyMotionState* getMotionState(){return motionState;}
+
+	void reset(){
+		btVector3 zeroVector(0, 0, 0);
+
+		body->clearForces();
+		body->setLinearVelocity(zeroVector);
+		body->setAngularVelocity(zeroVector);
+
+		
+		btTransform transform;
+		transform.setIdentity();
+
+		transform.setOrigin(startPos);
+
+		body->setWorldTransform(transform);
+		motionState->setWorldTransform(transform);
+	}
 
 };

@@ -29,67 +29,8 @@ THE SOFTWARE
 //! [starter]
 
 #include <exception>
+#include <string>
 #include "Bootstrap.h"
-
-
-bool TutorialApplication::configure(void)
-{
-    // Show the configuration dialog and initialise the system.
-    // You can skip this and use root.restoreConfig() to load configuration
-    // settings if you were sure there are valid ones saved in ogre.cfg.
-    if(mRoot->showConfigDialog())
-    {
-        // If returned true, user clicked OK so initialise.
-        // Here we choose to let the system create a default rendering window by passing 'true'.
-        mWindow = mRoot->initialise(true, "TutorialApplication Render Window");
-
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void TutorialApplication::createScene()
-    {
-        //Initialize all the physics objects
-        //set up all the necessary collision objects
-        collisionConfiguration = new btDefaultCollisionConfiguration();
-        ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-        dispatcher = new    btCollisionDispatcher(collisionConfiguration);
-        ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-        overlappingPairCache = new btDbvtBroadphase();
-        ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
-        solver = new btSequentialImpulseConstraintSolver;
-        dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
-
-
-        // Make paddles
-        //Ogre::ManualObject *cmo = createCubeMesh("manual", "");
-        //cmo->convertToMesh("cube");
-        //ent = scnMgr->createEntity("cube.mesh");
-        paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40));
-        collisionShapes.push_back(paddle1->getCollisionShape());
-        dynamicsWorld->addRigidBody(paddle1->getRigidBody());
-
-        paddle2 = new Paddle(mSceneMgr, btVector3(0, 0, -40));
-        collisionShapes.push_back(paddle2->getCollisionShape());
-        dynamicsWorld->addRigidBody(paddle2->getRigidBody());
-   
-        //make ball
-        ball = new Ball(mSceneMgr, btVector3(0, 5, 0));
-        collisionShapes.push_back(ball->getCollisionShape());
-        //ballNode = ball->getNode();
-        dynamicsWorld->addRigidBody(ball->getRigidBody());
-
-
-        //make ground
-        ground = new Wall(mSceneMgr, btVector3(0,-6,0), Ogre::Degree(0), Ogre::Degree(0));
-        collisionShapes.push_back(ground->getCollisionShape());
-        dynamicsWorld->addRigidBody(ground->getRigidBody());
-  }
-
 
 TutorialApplication::TutorialApplication()
    : mRoot(0),
@@ -116,6 +57,79 @@ TutorialApplication::TutorialApplication()
 TutorialApplication::~TutorialApplication()
 {
 }
+
+
+bool TutorialApplication::configure(void)
+{
+    // Show the configuration dialog and initialise the system.
+    // You can skip this and use root.restoreConfig() to load configuration
+    // settings if you were sure there are valid ones saved in ogre.cfg.
+    if(mRoot->showConfigDialog())
+    {
+        // If returned true, user clicked OK so initialise.
+        // Here we choose to let the system create a default rendering window by passing 'true'.
+        mWindow = mRoot->initialise(true, "TutorialApplication Render Window");
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void TutorialApplication::createBulletSim(){
+          //Initialize all the physics objects
+        //set up all the necessary collision objects
+        collisionConfiguration = new btDefaultCollisionConfiguration();
+        ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
+        dispatcher = new    btCollisionDispatcher(collisionConfiguration);
+        ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
+        overlappingPairCache = new btDbvtBroadphase();
+        ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
+        solver = new btSequentialImpulseConstraintSolver;
+        dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
+
+        dynamicsWorld->setGravity(btVector3(0, 0, 0));
+}
+
+void TutorialApplication::createScene()
+    {
+
+        paddle1 = new Paddle(mSceneMgr, btVector3(0, -4, 40));
+        collisionShapes.push_back(paddle1->getCollisionShape());
+        dynamicsWorld->addRigidBody(paddle1->getRigidBody());
+
+        paddle2 = new Paddle(mSceneMgr, btVector3(0, -4, -40));
+        collisionShapes.push_back(paddle2->getCollisionShape());
+        dynamicsWorld->addRigidBody(paddle2->getRigidBody());
+   
+        //make ball
+        ball = new Ball(mSceneMgr, btVector3(0, 5, 0));
+        collisionShapes.push_back(ball->getCollisionShape());
+        //ballNode = ball->getNode();
+        dynamicsWorld->addRigidBody(ball->getRigidBody());
+
+
+        walls = new Wall*[4];
+        //make ground
+        walls[0] = new Wall(mSceneMgr, btVector3(0,-56,0), 0, 0, 0);
+        collisionShapes.push_back(walls[0]->getCollisionShape());
+        dynamicsWorld->addRigidBody(walls[0]->getRigidBody());
+
+        walls[1] = new Wall(mSceneMgr, btVector3(50, -6, 0),0, 0, 90);
+        collisionShapes.push_back(walls[1]->getCollisionShape());
+        dynamicsWorld->addRigidBody(walls[1]->getRigidBody());
+
+        walls[2] = new Wall(mSceneMgr, btVector3(-50, -6, 0), 0, 0, -90);
+        collisionShapes.push_back(walls[2]->getCollisionShape());
+        dynamicsWorld->addRigidBody(walls[2]->getRigidBody());
+
+        walls[3] = new Wall(mSceneMgr, btVector3(0, 50, 0), 0, 0, 180);
+        collisionShapes.push_back(walls[3]->getCollisionShape());
+        dynamicsWorld->addRigidBody(walls[3]->getRigidBody());
+  }
+
 
 void TutorialApplication::setupResources(void)
 {
@@ -169,7 +183,7 @@ void TutorialApplication::createCamera(void)
     mCamNode->attachObject(mCamera);
 
     // Position it at 500 in Z direction
-    mCamNode->setPosition(0, 30, 75);
+    mCamNode->setPosition(0, 0, 75);
     // Look back along -Z
     mCamera->setNearClipDistance(5);
 }
@@ -282,49 +296,54 @@ bool TutorialApplication::setup()
     //mSceneMgr->setShadowTechnique(Ogre::ShadowTechnique::SHADOWTYPE_STENCIL_MODULATIVE);
     //! [lightingsset
 
+    createBulletSim();
     createScene();
     setupGUI();
     createFrameListener();
     
-    /*
-    Plane plane(Vector3::UNIT_Y, -5);
-    //! [planedefine]
-    MeshManager::getSingleton().createPlane(
-            "plane",
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-            plane,
-            10, 10, 20, 20,
-            true,
-            1, 5, 5,
-            Vector3::UNIT_Z);
+  
+    // Ogre::Plane plane(Ogre::Vector3::UNIT_Y, -5);
+    // //! [planedefine]
+    // Ogre::MeshManager::getSingleton().createPlane(
+    //         "plane",
+    //         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+    //         plane,
+    //         10, 10, 20, 20,
+    //         true,
+    //         1, 5, 5,
+    //         Ogre::Vector3::UNIT_Z);
 
-    Entity** walls_entity = new Entity*[6];
-    SceneNode** walls_scene = new SceneNode*[6];
+    //Ogre::Entity** walls_entity = new Ogre::Entity*[6];
+    //Ogre::SceneNode** walls_scene = new Ogre::SceneNode*[6];
 
-    for (int i = 0; i < 0; i++){
-        std::string name = "plane"+std::to_string(i);
-        std::cerr << name << '\n';
-        walls_entity[i] = scnMgr->createEntity("plane");
-        walls_scene[i] = scnMgr->getRootSceneNode()->createChildSceneNode();
+/*
+    for (int i = 0; i < 6; i++){
+        std::string name = "plane";
+        std::cerr << name << i << '\n';
+        walls_entity[i] = mSceneMgr->createEntity("plane");
+        walls_scene[i] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
         walls_scene[i]->attachObject(walls_entity[i]);
         walls_entity[i]->setCastShadows(false);
         walls_entity[i]->setMaterialName("Examples/Rockwall");
         if (i==1){
-            walls_scene[i]->roll(Degree(90));
+            walls_scene[i]->roll(Ogre::Degree(90));
         }
         if (i==2){
-            walls_scene[i]->roll(Degree(-90));
+            walls_scene[i]->roll(Ogre::Degree(-90));
         }
         if (i==3){
-            walls_scene[i]->pitch(Degree(90));
+            walls_scene[i]->pitch(Ogre::Degree(90));
         }
         if (i==4){
-            walls_scene[i]->pitch(Degree(-90));
+            walls_scene[i]->pitch(Ogre::Degree(-90));
         }
         if (i==5){
-            walls_scene[i]->roll(Degree(180));
+            walls_scene[i]->roll(Ogre::Degree(180));
         }
     }
+
+    std::cout << "About to look at walls" << std::endl;
+    mCamera->lookAt(walls_scene[0]->getPosition());*/
     
     //! [planesetmat] */
     return true;
@@ -349,7 +368,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_Q:  keys[5]=true; break;
       case OIS::KC_LEFT: keys[6]=true; break;
       case OIS::KC_RIGHT: keys[7]=true; break;
-      case OIS::KC_R: ball->reset(); break;
+      case OIS::KC_R: ball->reset(); paddle1->reset(); paddle2->reset(); break;
       case OIS::KC_SPACE: ball->push();
     }
 
@@ -394,7 +413,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     
     //b->Ball::move(evt);
     if (mCamera && ball){
-       mCamera->lookAt(ball->getNode()->getPosition());
+      mCamera->lookAt(ball->getNode()->getPosition());
     }
 
     if (keys[0]){
@@ -422,7 +441,9 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
        paddle1->moveRight();
     }
 
-    paddle2->updatePosition(ball->getNode()->getPosition());
+    if (paddle2 && ball){
+        paddle2->updatePosition(ball->getNode()->getPosition());
+    }
 
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
@@ -431,6 +452,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
 bool TutorialApplication::mouseMoved(const OIS::MouseEvent &arg)
 {
+
     CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
     context.injectMouseMove(arg.state.X.rel, arg.state.Y.rel);
     // Scroll wheel.

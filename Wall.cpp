@@ -3,33 +3,46 @@ class Wall : public Object {
 protected:
 
 public: 
-	Wall(Ogre::SceneManager* scnMgr, btVector3 vector, 
-		Ogre::Degree pitch, Ogre::Degree roll) : Object(scnMgr){
-		
-    	Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
+	Wall(Ogre::SceneManager* scnMgr, btVector3 vector, int yaw, int pitch, int roll) : Object(scnMgr){
 
-    	Ogre::MeshManager::getSingleton().createPlane("ground",
+    	Ogre::Plane plane(Ogre::Vector3::UNIT_Y, -50);
+
+    	Ogre::MeshManager::getSingleton().createPlane("wall",
             Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
             plane,
-            150,100,20,20,true,
+            100,100,20,20,true,
             1,5,5,Ogre::Vector3::UNIT_Z);
 
-    	ent = scnMgr->createEntity("ground");
+    	ent = scnMgr->createEntity("wall");
     	ent->setMaterialName("Examples/Rockwall");
     	ent->setCastShadows(false);
 
     	node = scnMgr->getRootSceneNode()->createChildSceneNode();
     	node->attachObject(ent);
 
-    	node->pitch(pitch);
-    	node->roll(roll);
+    	node->yaw(Ogre::Degree(yaw));
+    	node->pitch(Ogre::Degree(pitch));
+    	node->roll(Ogre::Degree(roll));
 
-        colShape = new btBoxShape(btVector3(btScalar(1500.),btScalar(1.),btScalar(1500.)));
+   		int width = 100;
+   		int height = 1;
+   		int depth = 100;
+
+   		//switch width and height
+   		if (roll == 90 || roll == -90){
+
+   			int temp = height;
+   			height = width;
+   			width=temp;
+
+   		}
+
+        colShape = new btBoxShape(btVector3(btScalar(width),btScalar(height),btScalar(depth)));
 
         btTransform startTransform;
         startTransform.setIdentity();
-        //startTransform.setOrigin(vector);
-        startTransform.setOrigin(btVector3(0,-6,0));
+        startTransform.setOrigin(vector);
+        //startTransform.setOrigin(btVector3(0,-6,0));
 
         mass = btScalar(0.f);
 
@@ -39,7 +52,7 @@ public:
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, colShape, localInertia);
         body = new btRigidBody(rbInfo);
 
-        body->setRestitution(0.0);
+        body->setRestitution(1.0);
         body->setFriction(0.0);
 	}
 

@@ -154,7 +154,7 @@ protected:
     Paddle *paddle1;
     Paddle *paddle2;
     Ball *ball;
-    Wall *ground;
+    Wall **walls;
 
     //GUI
     CEGUI::OgreRenderer* mRenderer;
