@@ -40,9 +40,36 @@ public:
 
 	void moveLeft(){
 
+		/*
+		btTransform oldTransform;
+
+		motionState->getWorldTransform(oldTransform);
+		btVector3 oldOrigin = oldTransform.getOrigin();
+
+		btTransform newTransform;
+		newTransform.setIdentity();
+
+		newTransform.setOrigin(btVector3(oldOrigin.getX()-0.05, oldOrigin.getY(), oldOrigin.getZ()));
+
+		body->setWorldTransform(newTransform);
+		motionState->setWorldTransform(newTransform);*/
+		body->activate(true);
+		btVector3 lvelocity(-10, 0, 0);
+		body->setLinearVelocity(lvelocity);
+
 	}
 
 	void moveRight(){
-		
+
+		body->activate(true);
+		btVector3 lvelocity(10, 0, 0);
+		body->setLinearVelocity(lvelocity);
+
+	}
+
+	void stop(){
+		body->activate(true);
+		btVector3 lvelocity(0, 0, 0);
+		body->setLinearVelocity(lvelocity);
 	}
 };

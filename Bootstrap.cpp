@@ -223,7 +223,7 @@ TutorialApplication::TutorialApplication()
     mKeyboard(0),
     mOverlaySystem(0)
 {
-  keys = new bool[6];
+  keys = new bool[8];
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
     m_ResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
 #else
@@ -499,6 +499,8 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_D:  keys[3]=true; break;
       case OIS::KC_E:  keys[4]=true; break;
       case OIS::KC_Q:  keys[5]=true; break;
+      case OIS::KC_LEFT: keys[6]=true; break;
+      case OIS::KC_RIGHT: keys[7]=true; break;
       case OIS::KC_R: ball->reset(); break;
       case OIS::KC_SPACE: ball->push();
     }
@@ -522,6 +524,8 @@ bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg)
       case OIS::KC_D:  keys[3]=false; break;
       case OIS::KC_E:  keys[4]=false; break;
       case OIS::KC_Q:  keys[5]=false; break;
+      case OIS::KC_LEFT: keys[6]=false; break;
+      case OIS::KC_RIGHT: keys[7]=false; break;
     }  
     
 
@@ -563,6 +567,17 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     if (keys[5]){
         mCamNode->translate(0,-0.1,0);
     }
+    if (keys[6]){
+       paddle1->moveLeft();
+    }
+    if (keys[7]){
+       paddle1->moveRight();
+    }
+
+    if (!(keys[6] || keys[7])){
+      paddle1->stop();
+    }
+
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
 
     //dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,50);
