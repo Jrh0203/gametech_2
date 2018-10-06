@@ -19,21 +19,24 @@ http://www.ogre3d.org/wiki/
 #define __Bootstrap_h_
 
 #include <OgreEntity.h>
+#include <OgreCamera.h>
 #include <OgreLogManager.h>
 #include <OgreRoot.h>
 #include <OgreViewport.h>
 #include <OgreSceneManager.h>
 #include <OgreRenderWindow.h>
-#include <OgreConfigFile.h>
+#include <OgreConfigFile.h> 
 
 #include <OgreWindowEventUtilities.h>
 #include <OgreFrameListener.h>
 #include <Overlay/OgreOverlaySystem.h>
-#include <OgreCamera.h>
 
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
+
+//#include "Object.cpp"
 #include "Paddle.cpp"
+#include "Ball.cpp"
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 #  include <OIS/OISEvents.h>
@@ -152,7 +155,7 @@ protected:
     //game objects
     Paddle *paddle1;
     Paddle *paddle2;
-    Object *ball;
+    Ball *ball;
 
     //GUI
     CEGUI::OgreRenderer* mRenderer;

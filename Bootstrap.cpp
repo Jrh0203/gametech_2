@@ -29,8 +29,7 @@ THE SOFTWARE
 //! [starter]
 
 #include <exception>
-
- #include "Bootstrap.h"
+#include "Bootstrap.h"
 
 Ogre::ManualObject* TutorialApplication::createCubeMesh(Ogre::String name, Ogre::String matName) {
 
@@ -112,23 +111,7 @@ Ogre::ManualObject* TutorialApplication::createPaddleMesh(Ogre::String name, Ogr
 
 
 void TutorialApplication::createBulletSim(void) {
-        ///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-        // collisionConfiguration = new btDefaultCollisionConfiguration();
-
-        // ///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-        // dispatcher = new    btCollisionDispatcher(collisionConfiguration);
-
-        // ///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-        // overlappingPairCache = new btDbvtBroadphase();
-
-        // ///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
-        // solver = new btSequentialImpulseConstraintSolver;
-
-        // dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
-        // //dynamicsWorld->setGravity(btVector3(0,-10,0));
-
-        // ///create a few basic rigid bodies
-        // // start with ground plane, 1500, 1500
+  
         btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(1500.),btScalar(1.),btScalar(1500.)));
 
         collisionShapes.push_back(groundShape);
@@ -156,72 +139,6 @@ void TutorialApplication::createBulletSim(void) {
             //add the body to the dynamics world
             dynamicsWorld->addRigidBody(body);
         }
-
-
-  //       {
-  //           //create my paddle
-  //           btCollisionShape* colShape = new btBoxShape(btVector3(2.5,2.5,2.5));
-  // //            btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-  //           collisionShapes.push_back(colShape);
-
-  //           /// Create Dynamic Objects
-  //           btTransform startTransform;
-  //           startTransform.setIdentity();
-
-  //           btScalar    mass(1.f);
-
-  //           //rigidbody is dynamic if and only if mass is non zero, otherwise static
-  //           bool isDynamic = (mass != 0.f);
-
-  //           btVector3 localInertia(0,0,0);
-  //           if (isDynamic)
-  //               colShape->calculateLocalInertia(mass,localInertia);
-
-  //               startTransform.setOrigin(btVector3(0,0, 40));
-  //               // *** give it a slight twist so it bouncees more interesting
-  //               startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.0));
-
-  //               //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-  //               //btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-  //               MyMotionState* motionState = new MyMotionState(startTransform, boxNode);
-  //               btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,colShape,localInertia);
-  //               btRigidBody* body = new btRigidBody(rbInfo);
-
-  //               dynamicsWorld->addRigidBody(body);
-  //       }
-
-  //       //add second box 
-  //       {
-  //           //create second paddle
-  //           btCollisionShape* boxShape = new btBoxShape(btVector3(2.5,2.5,2.5));
-  // //            btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-  //           collisionShapes.push_back(boxShape);
-
-  //           /// Create Dynamic Objects
-  //           btTransform startTransform;
-  //           startTransform.setIdentity();
-
-  //           btScalar    mass(1.f);
-
-  //           //rigidbody is dynamic if and only if mass is non zero, otherwise static
-  //           bool isDynamic = (mass != 0.f);
-
-  //           btVector3 localInertia(0,0,0.0);
-  //           if (isDynamic)
-  //               boxShape->calculateLocalInertia(mass,localInertia);
-
-  //               startTransform.setOrigin(btVector3(0,0,-40));
-  //               // *** give it a slight twist so it bouncees more interesting
-  //               startTransform.setRotation(btQuaternion(btVector3(1.0, 1.0, 0.0), 0.0));
-
-  //               //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-  //               //btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-  //               MyMotionState* motionState = new MyMotionState(startTransform, boxNode2);
-  //               btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,motionState,boxShape,localInertia);
-  //               btRigidBody* body = new btRigidBody(rbInfo);
-
-  //               dynamicsWorld->addRigidBody(body);
-  //        } 
 
 }
 
@@ -257,6 +174,8 @@ void TutorialApplication::createScene()
         solver = new btSequentialImpulseConstraintSolver;
         dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,overlappingPairCache,solver,collisionConfiguration);
 
+
+
         // Make paddles
         Ogre::ManualObject *cmo = createCubeMesh("manual", "");
         cmo->convertToMesh("cube");
@@ -268,11 +187,13 @@ void TutorialApplication::createScene()
         paddle2 = new Paddle(mSceneMgr, btVector3(0, 0, -40), mSceneMgr->createEntity("cube.mesh"));
         collisionShapes.push_back(paddle2->getCollisionShape());
         dynamicsWorld->addRigidBody(paddle2->getRigidBody());
-    
-        ball = new Object(mSceneMgr);
+   
+        ball = new Ball(mSceneMgr, btVector3(0, 5, 0));
         collisionShapes.push_back(ball->getCollisionShape());
         //ballNode = ball->getNode();
         dynamicsWorld->addRigidBody(ball->getRigidBody());
+
+
 
         // make a rock wall on the floor
         Ogre::Entity* ent;
@@ -285,60 +206,7 @@ void TutorialApplication::createScene()
         ent->setMaterialName("Examples/Rockwall");
 
         ent->setCastShadows(false);
-
-        //make the gui
-        // mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
-        // CEGUI::ImageManager::setImagesetDefaultResourceGroup("Imagesets");
-        // CEGUI::Font::setDefaultResourceGroup("Fonts");
-        // CEGUI::Scheme::setDefaultResourceGroup("Schemes");
-        // CEGUI::WidgetLookManager::setDefaultResourceGroup("LookNFeel");
-        // CEGUI::WindowManager::setDefaultResourceGroup("Layouts");
-
-        // CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
-        // CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
-        
-        
-        // CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
-        // CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
-
-        // CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-        // quit->setText("Quit");
-        // quit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
-        // sheet->addChild(quit);
-        // CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
-
-        // quit->subscribeEvent(CEGUI::PushButton::EventClicked, 
-        //   CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
-
-
-        std::cout << "end of set up" <<std::endl;
-
-        // make a light to see stuff with
-        /*
-        Light *light = mSceneMgr->createLight("Light1");
-        light->setType(Light::LT_POINT);
-        light->setPosition(Vector3(250, 150, 250));
-        light->setDiffuseColour(ColourValue::White);
-        light->setSpecularColour(ColourValue::White);
-        */
-
-        // Create the scene node
-        //SceneNode *node = mSceneMgr->getRootSceneNode()->createChildSceneNode("CamNode1", Vector3(-200, 100, 200));
-        //node->yaw(Degree(-45));
-        //node->attachObject(cam);
-    }
-
-// void TutorialApplication::reset() { 
-//     btTransform initialTransform;
-
-//     initialTransform.setOrigin(btVector3(0.0, 5.0, 0.0));
-
-//     ballrb->setWorldTransform(initialTransform);
-
-//     //ballrb->setLinearVelocity(btVector3(0.0, 10, 0));
-//     //ballNode->setPosition(Ogre::Vector3(0, 5.0, 0));
-//     //ballrb->applyCentralImpulse(btVector3(0.5, 0, 0.5)); 
-// }
+  }
 
 
 TutorialApplication::TutorialApplication()
@@ -414,9 +282,7 @@ void TutorialApplication::chooseSceneManager(void)
 
 void TutorialApplication::createCamera(void)
 {
-    std::cout << "about to make camera" <<std::endl;
     mCamera = mSceneMgr->createCamera("PlayerCam");
-        std::cout << "made camera" <<std::endl;
     mCamNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
     mCamNode->attachObject(mCamera);
 
@@ -469,7 +335,6 @@ void TutorialApplication::createFrameListener(void)
     Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
 
     mRoot->addFrameListener(this);
-    Ogre::LogManager::getSingletonPtr()->logMessage("*** done with frame listener ***");
 }
 
 void TutorialApplication::setupGUI(){
@@ -497,17 +362,47 @@ void TutorialApplication::setupGUI(){
         CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
 }
 
+/*
+void TutorialApplication::setupRoom(){
+
+    btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(1500.),btScalar(1.),btScalar(1500.)));
+
+    collisionShapes.push_back(groundShape);
+
+    btTransform groundTransform;
+    groundTransform.setIdentity();
+    groundTransform.setOrigin(btVector3(0,-6,0));
+
+    {
+      btScalar mass(0.);
+
+      //rigidbody is dynamic if and only if mass is non zero, otherwise static
+      bool isDynamic = (mass != 0.f);
+
+            btVector3 localInertia(0,0,0);
+            if (isDynamic)
+                groundShape->calculateLocalInertia(mass,localInertia);
+
+            // lathe - this plane isnt going to be moving so i dont care about setting the motion state
+            //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+            btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
+            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,groundShape,localInertia);
+            btRigidBody* body = new btRigidBody(rbInfo);
+
+            //add the body to the dynamics world
+            dynamicsWorld->addRigidBody(body);
+        }
+
+}*/
+
 
 bool TutorialApplication::setup()
 {
 
-    std::cout << "In setup" <<std::endl;
     // do not forget to call the base first
     for (int i = 0; i < 6; i++){
         keys[i]=false;
     }
-
-    std::cout << "Made keys" <<std::endl;
     //ApplicationContext::setup();
     //addInputListener(this);
 
@@ -518,95 +413,31 @@ bool TutorialApplication::setup()
     if (!carryOn) return false;
 
     setupResources();
-
-    std::cout << "Finished setting up resources" <<std::endl;
-
-
     chooseSceneManager();
-
-    std::cout << "Chose scene manager" <<std::endl;
-
     createCamera();
-
-    std::cout << "Made camera" <<std::endl;
-
     createViewports();
-
-    std::cout << "Created viewports" <<std::endl;
-
     Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
     //createResourceListener();
     loadResources();
-
-    std::cout << "Making light..." <<std::endl;
 
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
     Ogre::SceneNode* lightNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
     lightNode->attachObject(light);
     lightNode->setPosition(0, 10, 0);
 
-    std::cout << "Made light" <<std::endl;
-
     // register our scene with the RTSS
-    //RTShader::ShaderGenerator* shadergen = RTShader::ShaderGenerator::getSingletonPtr();
-    //shadergen->addSceneManager(scnMgr);
 
-    // -- tutorial section start --
-    //! [cameracreate]
-    //camNode = scnMgr->getRootSceneNode()->createChildSceneNode();
-    //cam = scnMgr->createCamera("myCam");
-    //! [cameracreate]
-
-    //! [cameraposition]
-    //camNode->setPosition(0, 30, 75);
-    //! [cameraposition]
-
-    //! [cameralaststep]
-    //cam->setNearClipDistance(5);
-    //camNode->attachObject(cam);
-    //! [cameralaststep]
-
-    //! [addviewport]
-    //Viewport* vp = getRenderWindow()->addViewport(cam);
-    //! [addviewport]
-
-    //! [viewportback]
-    //vp->setBackgroundColour(ColourValue(0, 0, 0));
-    //! [viewportback]
-
-    //! [cameraratio]
-    //cam->setAspectRatio(Real(vp->getActualWidth()) / Real(vp->getActualHeight()));
-    //! [cameraratio]
-
-    //scnMgr->setSkyBox(true, "Examples/MorningSkyBox", 5000, false);
-    //! [ninja]
-    /*
-    Entity* sphereEntity = scnMgr->createEntity("sphere.mesh");
-
-    sphereEntity->setCastShadows(true);
-    
-    SceneNode* sphere_scene = scnMgr->getRootSceneNode()->createChildSceneNode();
-    sphere_scene->attachObject(sphereEntity);
-    sphere_scene->setScale(.01, .01, .01);
-    sphere_scene->setPosition(0,0,0);
-
-
-    */
     //! [lightingsset]
     mSceneMgr->setAmbientLight(Ogre::ColourValue(1, 1, 1));
     //mSceneMgr->setShadowTechnique(Ogre::ShadowTechnique::SHADOWTYPE_STENCIL_MODULATIVE);
-    //! [lightingsset]
-
-    std::cout << "About to create scene" <<std::endl;
+    //! [lightingsset
 
     createScene();
     createBulletSim();
     setupGUI();
     createFrameListener();
     
-
-    //b = new Ball(scnMgr);
     /*
     Plane plane(Vector3::UNIT_Y, -5);
     //! [planedefine]
@@ -659,38 +490,17 @@ void TutorialApplication::destroyScene(void)
 bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
 {
     std::cerr << "Key! " << '\n';
-    if (arg.key == OIS::KC_ESCAPE)
-    {
-        mShutDown = true;
-    }
-  
-    if (arg.key == 'r')
-    {
-          ball->reset();
-      }
-    if (arg.key == 'w')
-    {
-        keys[0]=true;
-    }
-    if (arg.key == 'a')
-    {
-        keys[1]=true;
-    }
-    if (arg.key == 's')
-    {
-        keys[2]=true;
-    }
-    if (arg.key == 'd')
-    {
-        keys[3]=true;
-    }
-    if (arg.key == 'e')
-    {
-        keys[4]=true;
-    }
-    if (arg.key == 'q')
-    {
-        keys[5]=true;
+
+    switch(arg.key){
+      case OIS::KC_ESCAPE: mShutDown = true; break;
+      case OIS::KC_W:  keys[0]=true; break;
+      case OIS::KC_A:  keys[1]=true; break;
+      case OIS::KC_S:  keys[2]=true; break;
+      case OIS::KC_D:  keys[3]=true; break;
+      case OIS::KC_E:  keys[4]=true; break;
+      case OIS::KC_Q:  keys[5]=true; break;
+      case OIS::KC_R: ball->reset(); break;
+      case OIS::KC_SPACE: ball->push();
     }
 
   CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
@@ -704,34 +514,16 @@ bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg)
 {
   
     std::cerr << "Key! " << '\n';
-    if (arg.key == OIS::KC_ESCAPE)
-    {
-        mShutDown = true;
-    }
-    if (arg.key == 'w')
-    {
-        keys[0]=false;
-    }
-    if (arg.key == 'a')
-    {
-        keys[1]=false;
-    }
-    if (arg.key == 's')
-    {
-        keys[2]=false;
-    }
-    if (arg.key == 'd')
-    {
-        keys[3]=false;
-    }
-    if (arg.key == 'e')
-    {
-        keys[4]=false;
-    }
-    if (arg.key == 'q')
-    {
-        keys[5]=false;
-    }
+    switch(arg.key){
+      case OIS::KC_ESCAPE: mShutDown = true; break;
+      case OIS::KC_W:  keys[0]=false; break;
+      case OIS::KC_A:  keys[1]=false; break;
+      case OIS::KC_S:  keys[2]=false; break;
+      case OIS::KC_D:  keys[3]=false; break;
+      case OIS::KC_E:  keys[4]=false; break;
+      case OIS::KC_Q:  keys[5]=false; break;
+    }  
+    
 
     CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)arg.key);
     return true;
@@ -753,23 +545,23 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
        mCamera->lookAt(ball->getNode()->getPosition());
     }
 
-    if (keys[0]== true){
-        mCamNode->translate(0,0,-1);
+    if (keys[0]){
+        mCamNode->translate(0,0,-0.1);
     }
-    if (keys[1]==true){
-        mCamNode->translate(-1,0,0);
+    if (keys[1]){
+        mCamNode->translate(-0.1,0,0);
     }
-    if (keys[2]==true){
-        mCamNode->translate(0,0,1);
+    if (keys[2]){
+        mCamNode->translate(0,0,0.1);
     }
-    if (keys[3]==true){
-        mCamNode->translate(1,0,0);
+    if (keys[3]){
+        mCamNode->translate(0.1,0,0);
     }
-    if (keys[4]==true){
-        mCamNode->translate(0,1,0);
+    if (keys[4]){
+        mCamNode->translate(0,0.1,0);
     }
-    if (keys[5]==true){
-        mCamNode->translate(0,-1,0);
+    if (keys[5]){
+        mCamNode->translate(0,-0.1,0);
     }
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
 
@@ -846,8 +638,6 @@ void TutorialApplication::go(void)
         return;
 
     mRoot->startRendering();
-    std::cout << "Rendering finished" << std::endl;
-    // Clean up
     destroyScene();
 }
 
@@ -888,7 +678,6 @@ bool TutorialApplication::quit(const CEGUI::EventArgs& e){
  int main(int argc, char **argv)
  {
     TutorialApplication app;
-    std::cout << "Application constructed" <<std::endl;
     app.go();
     return 0;
 }

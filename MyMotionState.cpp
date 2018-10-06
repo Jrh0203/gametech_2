@@ -1,3 +1,7 @@
+#include <Ogre.h>
+#include "btBulletCollisionCommon.h"
+#include "btBulletDynamicsCommon.h"
+
 class MyMotionState : public btMotionState {
 public:
     MyMotionState(const btTransform &initialpos, Ogre::SceneNode *node) {
