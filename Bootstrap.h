@@ -96,7 +96,7 @@ protected:
     void chooseSceneManager(void);
     void createCamera(void);
     void createFrameListener(void);
-    void createScene(void); // Override me!
+    void createScene(void); 
     void destroyScene(void);
     void createViewports(void);
     void setupResources(void);
@@ -113,9 +113,6 @@ protected:
     bool quit(const CEGUI::EventArgs& e);
 
     CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
-
-    Ogre::ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName);
-    Ogre::ManualObject* createPaddleMesh(Ogre::String name, Ogre::String matName);
 
     // Adjust mouse clipping area
     void windowResized(Ogre::RenderWindow* rw);

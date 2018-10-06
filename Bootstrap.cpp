@@ -31,83 +31,6 @@ THE SOFTWARE
 #include <exception>
 #include "Bootstrap.h"
 
-Ogre::ManualObject* TutorialApplication::createCubeMesh(Ogre::String name, Ogre::String matName) {
-
-   Ogre::ManualObject* cube = new Ogre::ManualObject(name);
-
-   cube->begin(matName);
-
-   cube->position(0.5,-0.5,1.0);cube->normal(0.408248,-0.816497,0.408248);cube->textureCoord(1,0);
-   cube->position(-0.5,-0.5,0.0);cube->normal(-0.408248,-0.816497,-0.408248);cube->textureCoord(0,1);
-   cube->position(0.5,-0.5,0.0);cube->normal(0.666667,-0.333333,-0.666667);cube->textureCoord(1,1);
-   cube->position(-0.5,-0.5,1.0);cube->normal(-0.666667,-0.333333,0.666667);cube->textureCoord(0,0);
-   cube->position(0.5,0.5,1.0);cube->normal(0.666667,0.333333,0.666667);cube->textureCoord(1,0);
-   cube->position(-0.5,-0.5,1.0);cube->normal(-0.666667,-0.333333,0.666667);cube->textureCoord(0,1);
-   cube->position(0.5,-0.5,1.0);cube->normal(0.408248,-0.816497,0.408248);cube->textureCoord(1,1);
-   cube->position(-0.5,0.5,1.0);cube->normal(-0.408248,0.816497,0.408248);cube->textureCoord(0,0);
-   cube->position(-0.5,0.5,0.0);cube->normal(-0.666667,0.333333,-0.666667);cube->textureCoord(0,1);
-   cube->position(-0.5,-0.5,0.0);cube->normal(-0.408248,-0.816497,-0.408248);cube->textureCoord(1,1);
-   cube->position(-0.5,-0.5,1.0);cube->normal(-0.666667,-0.333333,0.666667);cube->textureCoord(1,0);
-   cube->position(0.5,-0.5,0.0);cube->normal(0.666667,-0.333333,-0.666667);cube->textureCoord(0,1);
-   cube->position(0.5,0.5,0.0);cube->normal(0.408248,0.816497,-0.408248);cube->textureCoord(1,1);
-   cube->position(0.5,-0.5,1.0);cube->normal(0.408248,-0.816497,0.408248);cube->textureCoord(0,0);
-   cube->position(0.5,-0.5,0.0);cube->normal(0.666667,-0.333333,-0.666667);cube->textureCoord(1,0);
-   cube->position(-0.5,-0.5,0.0);cube->normal(-0.408248,-0.816497,-0.408248);cube->textureCoord(0,0);
-   cube->position(-0.5,0.5,1.0);cube->normal(-0.408248,0.816497,0.408248);cube->textureCoord(1,0);
-   cube->position(0.5,0.5,0.0);cube->normal(0.408248,0.816497,-0.408248);cube->textureCoord(0,1);
-   cube->position(-0.5,0.5,0.0);cube->normal(-0.666667,0.333333,-0.666667);cube->textureCoord(1,1);
-   cube->position(0.5,0.5,1.0);cube->normal(0.666667,0.333333,0.666667);cube->textureCoord(0,0);
-
-   cube->triangle(0,1,2);      cube->triangle(3,1,0);
-   cube->triangle(4,5,6);      cube->triangle(4,7,5);
-   cube->triangle(8,9,10);      cube->triangle(10,7,8);
-   cube->triangle(4,11,12);   cube->triangle(4,13,11);
-   cube->triangle(14,8,12);   cube->triangle(14,15,8);
-   cube->triangle(16,17,18);   cube->triangle(16,19,17);
-   cube->end();
-
-   return cube;
-}
-
-
-
-Ogre::ManualObject* TutorialApplication::createPaddleMesh(Ogre::String name, Ogre::String matName) {
-
-   Ogre::ManualObject* paddle = new Ogre::ManualObject(name);
-
-   paddle->begin(matName);
-
-   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(1,0);
-   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(0,1);
-   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(1,1);
-   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(0,0);
-   paddle->position(0.5,0.5,1.0);paddle->normal(0.666667,0.333333,0.666667);paddle->textureCoord(1,0);
-   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(0,1);
-   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(1,1);
-   paddle->position(-0.5,0.5,1.0);paddle->normal(-0.408248,0.816497,0.408248);paddle->textureCoord(0,0);
-   paddle->position(-0.5,0.5,0.0);paddle->normal(-0.666667,0.333333,-0.666667);paddle->textureCoord(0,1);
-   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(1,1);
-   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(1,0);
-   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(0,1);
-   paddle->position(0.5,0.5,0.0);paddle->normal(0.408248,0.816497,-0.408248);paddle->textureCoord(1,1);
-   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(0,0);
-   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(1,0);
-   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(0,0);
-   paddle->position(-0.5,0.5,1.0);paddle->normal(-0.408248,0.816497,0.408248);paddle->textureCoord(1,0);
-   paddle->position(0.5,0.5,0.0);paddle->normal(0.408248,0.816497,-0.408248);paddle->textureCoord(0,1);
-   paddle->position(-0.5,0.5,0.0);paddle->normal(-0.666667,0.333333,-0.666667);paddle->textureCoord(1,1);
-   paddle->position(0.5,0.5,1.0);paddle->normal(0.666667,0.333333,0.666667);paddle->textureCoord(0,0);
-
-   paddle->triangle(0,1,2);      paddle->triangle(3,1,0);
-   paddle->triangle(4,5,6);      paddle->triangle(4,7,5);
-   paddle->triangle(8,9,10);      paddle->triangle(10,7,8);
-   paddle->triangle(4,11,12);   paddle->triangle(4,13,11);
-   paddle->triangle(14,8,12);   paddle->triangle(14,15,8);
-   paddle->triangle(16,17,18);   paddle->triangle(16,19,17);
-   paddle->end();
-
-   return paddle;
-}
 
 bool TutorialApplication::configure(void)
 {
@@ -143,14 +66,14 @@ void TutorialApplication::createScene()
 
 
         // Make paddles
-        Ogre::ManualObject *cmo = createCubeMesh("manual", "");
-        cmo->convertToMesh("cube");
+        //Ogre::ManualObject *cmo = createCubeMesh("manual", "");
+        //cmo->convertToMesh("cube");
         //ent = scnMgr->createEntity("cube.mesh");
-        paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40), mSceneMgr->createEntity("cube.mesh"));
+        paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40));
         collisionShapes.push_back(paddle1->getCollisionShape());
         dynamicsWorld->addRigidBody(paddle1->getRigidBody());
 
-        paddle2 = new Paddle(mSceneMgr, btVector3(0, 0, -40), mSceneMgr->createEntity("cube.mesh"));
+        paddle2 = new Paddle(mSceneMgr, btVector3(0, 0, -40));
         collisionShapes.push_back(paddle2->getCollisionShape());
         dynamicsWorld->addRigidBody(paddle2->getRigidBody());
    
@@ -335,8 +258,8 @@ bool TutorialApplication::setup()
     // get a pointer to the already created root
     mRoot = new Ogre::Root(mPluginsCfg);
 
-     bool carryOn = configure();
-    if (!carryOn) return false;
+    bool carryOn = configure();
+      if (!carryOn) return false;
 
     setupResources();
     chooseSceneManager();
@@ -499,10 +422,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
        paddle1->moveRight();
     }
 
-    /*
-    if (!(keys[6] || keys[7])){
-      paddle1->stop();
-    }*/
+    paddle2->updatePosition(ball->getNode()->getPosition());
 
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);

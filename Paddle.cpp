@@ -4,8 +4,13 @@
 class Paddle : public Object { 
 
 public: 
-	Paddle (Ogre::SceneManager* scnMgr, btVector3 vector, Ogre::Entity* ent) 
+	Paddle (Ogre::SceneManager* scnMgr, btVector3 vector) 
 	: Object(scnMgr) {
+
+	 Ogre::ManualObject *cmo = createCubeMesh("manual", "");
+    cmo->convertToMesh("cube");
+
+    ent = scnMgr->createEntity("cube.mesh");
 		
 	node = scnMgr->getRootSceneNode()->createChildSceneNode();
 	node->attachObject(ent);	
@@ -61,4 +66,54 @@ public:
 		btVector3 lvelocity(0, 0, 0);
 		body->setLinearVelocity(lvelocity);
 	}
+
+	void updatePosition(Ogre::Vector3 ballPos){
+
+		Ogre::Vector3 myPos = node->getPosition();
+
+		if (ballPos.x < myPos.x){
+			body->setLinearVelocity(btVector3(-15, 0, 0));
+		} else if (ballPos.x > myPos.x){
+			body->setLinearVelocity(btVector3(15, 0, 0));
+		}
+
+	}
+
+	Ogre::ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName) {
+
+	   Ogre::ManualObject* paddle = new Ogre::ManualObject(name);
+
+	   paddle->begin(matName);
+
+	   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(1,0);
+	   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(0,1);
+	   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(1,1);
+	   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(0,0);
+	   paddle->position(0.5,0.5,1.0);paddle->normal(0.666667,0.333333,0.666667);paddle->textureCoord(1,0);
+	   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(0,1);
+	   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(1,1);
+	   paddle->position(-0.5,0.5,1.0);paddle->normal(-0.408248,0.816497,0.408248);paddle->textureCoord(0,0);
+	   paddle->position(-0.5,0.5,0.0);paddle->normal(-0.666667,0.333333,-0.666667);paddle->textureCoord(0,1);
+	   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(1,1);
+	   paddle->position(-0.5,-0.5,1.0);paddle->normal(-0.666667,-0.333333,0.666667);paddle->textureCoord(1,0);
+	   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(0,1);
+	   paddle->position(0.5,0.5,0.0);paddle->normal(0.408248,0.816497,-0.408248);paddle->textureCoord(1,1);
+	   paddle->position(0.5,-0.5,1.0);paddle->normal(0.408248,-0.816497,0.408248);paddle->textureCoord(0,0);
+	   paddle->position(0.5,-0.5,0.0);paddle->normal(0.666667,-0.333333,-0.666667);paddle->textureCoord(1,0);
+	   paddle->position(-0.5,-0.5,0.0);paddle->normal(-0.408248,-0.816497,-0.408248);paddle->textureCoord(0,0);
+	   paddle->position(-0.5,0.5,1.0);paddle->normal(-0.408248,0.816497,0.408248);paddle->textureCoord(1,0);
+	   paddle->position(0.5,0.5,0.0);paddle->normal(0.408248,0.816497,-0.408248);paddle->textureCoord(0,1);
+	   paddle->position(-0.5,0.5,0.0);paddle->normal(-0.666667,0.333333,-0.666667);paddle->textureCoord(1,1);
+	   paddle->position(0.5,0.5,1.0);paddle->normal(0.666667,0.333333,0.666667);paddle->textureCoord(0,0);
+
+	   paddle->triangle(0,1,2);      paddle->triangle(3,1,0);
+	   paddle->triangle(4,5,6);      paddle->triangle(4,7,5);
+	   paddle->triangle(8,9,10);      paddle->triangle(10,7,8);
+	   paddle->triangle(4,11,12);   paddle->triangle(4,13,11);
+	   paddle->triangle(14,8,12);   paddle->triangle(14,15,8);
+	   paddle->triangle(16,17,18);   paddle->triangle(16,19,17);
+	   paddle->end();
+
+	   return paddle;
+}
 };
