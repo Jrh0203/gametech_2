@@ -47,6 +47,10 @@ http://www.ogre3d.org/wiki/
 #  include <OISKeyboard.h>
 #  include <OISMouse.h>
 
+//CEGUI STUFF
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/RendererModules/Ogre/Renderer.h>
+
 #endif
 
 #ifdef OGRE_STATIC_LIB
@@ -94,6 +98,7 @@ protected:
     void setupResources(void);
     void loadResources(void);
     bool frameRenderingQueued(const Ogre::FrameEvent& evt);
+    void setupGUI();
 
     bool keyPressed(const OIS::KeyEvent &arg);
     bool keyReleased(const OIS::KeyEvent &arg);
@@ -101,6 +106,9 @@ protected:
     bool mouseMoved(const OIS::MouseEvent &arg);
     bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
     bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+    bool quit(const CEGUI::EventArgs& e);
+
+    CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 
     Ogre::ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName);
     Ogre::ManualObject* createPaddleMesh(Ogre::String name, Ogre::String matName);
@@ -132,6 +140,7 @@ protected:
     Ogre::String                 m_ResourcePath;
     bool* keys;
 
+    //physics
     btDefaultCollisionConfiguration* collisionConfiguration;
     btCollisionDispatcher* dispatcher;
     btBroadphaseInterface* overlappingPairCache;
@@ -140,10 +149,13 @@ protected:
     btCollisionShape* groundShape;
     btAlignedObjectArray<btCollisionShape*> collisionShapes;
 
+    //game objects
     Paddle *paddle1;
     Paddle *paddle2;
     Object *ball;
 
+    //GUI
+    CEGUI::OgreRenderer* mRenderer;
 
 #ifdef OGRE_STATIC_LIB
     Ogre::StaticPluginLoader m_StaticPluginLoader;

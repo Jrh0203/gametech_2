@@ -30,62 +30,8 @@ THE SOFTWARE
 
 #include <exception>
 
-// #include <Ogre.h>
-// #include <OgreApplicationContext.h>
-// #include <OgreInput.h>
-// #include <OgreRTShaderSystem.h>
-// #include <OgreApplicationContext.h>
-// #include <OgreCameraMan.h>
-// #include "btBulletCollisionCommon.h"
-// #include "btBulletDynamicsCommon.h"
-
  #include "Bootstrap.h"
-// #include "Paddle.cpp"
 
-// int i = 0;
-
-// class TutorialApplication
-//         : public ApplicationContext
-//         , public InputListener
-// {
-// public:
-//     TutorialApplication();
-//     ~TutorialApplication();
-
-//     void setup();
-//     bool keyPressed(const KeyboardEvent& evt);
-//     bool keyReleased(const KeyboardEvent& evt);
-//     void frameRendered(const Ogre::FrameEvent & evt );
-//     //bool frameStarted(const FrameEvent &evt);
-//     void setupScene(SceneManager* mSceneMgr);
-//     void createBulletSim();
-//     ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName);
-//     ManualObject* createPaddleMesh(Ogre::String name, Ogre::String matName);
-    
-
-//     //Ball* b;
-//     bool* keys = new bool[6];
-//     SceneNode* camNode;
-
-//     //Physics* physicsEngine;
-//     btDefaultCollisionConfiguration* collisionConfiguration;
-//     btCollisionDispatcher* dispatcher;
-//     btBroadphaseInterface* overlappingPairCache;
-//     btSequentialImpulseConstraintSolver* solver;
-//     btDiscreteDynamicsWorld* dynamicsWorld;
-//     btCollisionShape* groundShape;
-//     btAlignedObjectArray<btCollisionShape*> collisionShapes;
-
-
-//     //SceneNode *boxNode;
-//     //SceneNode *boxNode2;
-//     Paddle *paddle1;
-//     Paddle *paddle2;
-//     Object *ball;
-
-//     //SceneNode *ballNode;
-//     //btRigidBody* ballrb;
-// };
 Ogre::ManualObject* TutorialApplication::createCubeMesh(Ogre::String name, Ogre::String matName) {
 
    Ogre::ManualObject* cube = new Ogre::ManualObject(name);
@@ -339,8 +285,32 @@ void TutorialApplication::createScene()
         ent->setMaterialName("Examples/Rockwall");
 
         ent->setCastShadows(false);
+
+        //make the gui
+        // mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
+        // CEGUI::ImageManager::setImagesetDefaultResourceGroup("Imagesets");
+        // CEGUI::Font::setDefaultResourceGroup("Fonts");
+        // CEGUI::Scheme::setDefaultResourceGroup("Schemes");
+        // CEGUI::WidgetLookManager::setDefaultResourceGroup("LookNFeel");
+        // CEGUI::WindowManager::setDefaultResourceGroup("Layouts");
+
+        // CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
+        // CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
         
         
+        // CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
+        // CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+
+        // CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        // quit->setText("Quit");
+        // quit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        // sheet->addChild(quit);
+        // CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+
+        // quit->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        //   CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
+
+
         std::cout << "end of set up" <<std::endl;
 
         // make a light to see stuff with
@@ -502,6 +472,31 @@ void TutorialApplication::createFrameListener(void)
     Ogre::LogManager::getSingletonPtr()->logMessage("*** done with frame listener ***");
 }
 
+void TutorialApplication::setupGUI(){
+        mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
+        CEGUI::ImageManager::setImagesetDefaultResourceGroup("Imagesets");
+        CEGUI::Font::setDefaultResourceGroup("Fonts");
+        CEGUI::Scheme::setDefaultResourceGroup("Schemes");
+        CEGUI::WidgetLookManager::setDefaultResourceGroup("LookNFeel");
+        CEGUI::WindowManager::setDefaultResourceGroup("Layouts");
+
+        CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
+        CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
+        
+        
+        CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
+        CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+
+        CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        quit->setText("Quit");
+        quit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        sheet->addChild(quit);
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+
+        quit->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
+}
+
 
 bool TutorialApplication::setup()
 {
@@ -607,6 +602,7 @@ bool TutorialApplication::setup()
 
     createScene();
     createBulletSim();
+    setupGUI();
     createFrameListener();
     
 
@@ -696,7 +692,11 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
     {
         keys[5]=true;
     }
-    return true;
+
+  CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+  context.injectKeyDown((CEGUI::Key::Scan)arg.key);
+  context.injectChar((CEGUI::Key::Scan)arg.text);
+  return true;
 }
 
 
@@ -732,6 +732,8 @@ bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg)
     {
         keys[5]=false;
     }
+
+    CEGUI::System::getSingleton().getDefaultGUIContext().injectKeyUp((CEGUI::Key::Scan)arg.key);
     return true;
 }
 
@@ -769,6 +771,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     if (keys[5]==true){
         mCamNode->translate(0,-1,0);
     }
+    CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
 
     //dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,50);
     //return true;
@@ -779,17 +782,44 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
 bool TutorialApplication::mouseMoved(const OIS::MouseEvent &arg)
 {
+    CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+    context.injectMouseMove(arg.state.X.rel, arg.state.Y.rel);
+    // Scroll wheel.
+    if (arg.state.Z.rel)
+      context.injectMouseWheelChange(arg.state.Z.rel / 120.0f);
     return true;
 }
 //---------------------------------------------------------------------------
 bool TutorialApplication::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
 {
-    return true;
+  CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+  context.injectMouseButtonDown(convertButton(id));
+  return true;
 }
 //---------------------------------------------------------------------------
 bool TutorialApplication::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
 {
+    CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
+    context.injectMouseButtonUp(convertButton(id));
     return true;
+}
+
+CEGUI::MouseButton TutorialApplication::convertButton(OIS::MouseButtonID buttonID)
+{
+    switch (buttonID)
+    {
+    case OIS::MB_Left:
+        return CEGUI::LeftButton;
+
+    case OIS::MB_Right:
+        return CEGUI::RightButton;
+
+    case OIS::MB_Middle:
+        return CEGUI::MiddleButton;
+
+    default:
+        return CEGUI::LeftButton;
+    }
 }
 
 void TutorialApplication::go(void)
@@ -848,6 +878,11 @@ void TutorialApplication::windowClosed(Ogre::RenderWindow* rw)
             mInputManager = 0;
         }
     }
+}
+
+bool TutorialApplication::quit(const CEGUI::EventArgs& e){
+  mShutDown = true;
+  return true;
 }
 
  int main(int argc, char **argv)
