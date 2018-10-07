@@ -45,12 +45,10 @@ public:
 		body->applyCentralImpulse( btVector3(1, 0, 3));
 	}
 
-	bool inBounds(){ 
-		return (node->getPosition().z < 40 
-			&& node->getPosition().z > -40); 
-	}
-
 	void explode(){
 		reset();
 	}
+
+
+
 };

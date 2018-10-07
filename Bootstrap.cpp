@@ -29,8 +29,43 @@ THE SOFTWARE
 //! [starter]
 
 #include <exception>
-#include <string>
 #include "Bootstrap.h"
+
+struct OpponentWallCallback :public btCollisionWorld::ContactResultCallback
+{ OpponentWallCallback(TutorialApplication* ptr) : context(ptr) {}
+    btScalar addSingleResult(btManifoldPoint& cp,
+        const btCollisionObjectWrapper* colObj0Wrap,
+        int partId0,
+        int index0,
+        const btCollisionObjectWrapper* colObj1Wrap,
+        int partId1,
+        int index1)
+    {
+        context->updateScore(1);
+    }
+
+    TutorialApplication* context;
+};
+
+struct PlayerWallCallback : public btCollisionWorld::ContactResultCallback
+{
+    PlayerWallCallback(TutorialApplication* ptr) : context(ptr) {}
+
+    btScalar addSingleResult(btManifoldPoint& cp,
+        const btCollisionObjectWrapper* colObj0Wrap,
+        int partId0,
+        int index0,
+        const btCollisionObjectWrapper* colObj1Wrap,
+        int partId1,
+        int index1)
+    {
+        context->updateScore(2);
+    }
+
+    TutorialApplication* context;
+};
+
+
 
 TutorialApplication::TutorialApplication()
    : mRoot(0),
@@ -47,6 +82,11 @@ TutorialApplication::TutorialApplication()
     mOverlaySystem(0)
 {
   keys = new bool[8];
+
+  playerScore = 0;
+  opponentScore = 0;
+  gameRunning = true;
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
     m_ResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
 #else
@@ -111,7 +151,8 @@ void TutorialApplication::createScene()
         dynamicsWorld->addRigidBody(ball->getRigidBody());
 
 
-        walls = new Wall*[4];
+        //make all the walls, code could probably be prettier lol 
+        walls = new Wall*[6];
         //make ground
         walls[0] = new Wall(mSceneMgr, btVector3(0,-56,0), 0, 0, 0);
         collisionShapes.push_back(walls[0]->getCollisionShape());
@@ -128,6 +169,17 @@ void TutorialApplication::createScene()
         walls[3] = new Wall(mSceneMgr, btVector3(0, 50, 0), 0, 0, 180);
         collisionShapes.push_back(walls[3]->getCollisionShape());
         dynamicsWorld->addRigidBody(walls[3]->getRigidBody());
+
+        walls[4] = new Wall(mSceneMgr, btVector3(0, 0, -50), 0, -90, 0);
+        collisionShapes.push_back(walls[4]->getCollisionShape());
+        dynamicsWorld->addRigidBody(walls[4]->getRigidBody());
+
+        walls[5] = new Wall(mSceneMgr, btVector3(0, 0, 50), 0, 90, 0);
+        collisionShapes.push_back(walls[5]->getCollisionShape());
+        dynamicsWorld->addRigidBody(walls[5]->getRigidBody());
+
+        pwcb = new PlayerWallCallback(this);
+        owcb = new OpponentWallCallback(this);
   }
 
 
@@ -248,6 +300,7 @@ void TutorialApplication::setupGUI(){
         CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
         CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
 
+        //quit button
         CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         quit->setText("Quit");
         quit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
@@ -256,6 +309,15 @@ void TutorialApplication::setupGUI(){
 
         quit->subscribeEvent(CEGUI::PushButton::EventClicked, 
         CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
+
+        scoreBoard = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        scoreBoard->setPosition(CEGUI::UVector2(CEGUI::UDim(0.85,0),CEGUI::UDim(0,0)));
+        scoreBoard->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.15, 0)));
+        scoreBoard->setText(getScoreBoardText());
+        sheet->addChild(scoreBoard);
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+
+        //score
 }
 
 
@@ -308,17 +370,19 @@ void TutorialApplication::destroyScene(void)
 {
 }
 
-void TutorialApplication::updateScore(void){
+void TutorialApplication::updateScore(int player){
 
-    int ballZ = ball->getNode()->getPosition().z;
-
-    if (ballZ < -40){
+    if (player == 1){
         playerScore++;
     } else {
         opponentScore++;
     }
 
+    scoreBoard->setText(getScoreBoardText());
     reset();
+
+    std::cout << "Score: " << playerScore << " vs " << opponentScore << std::endl;
+    std::cout << "Updated score" << std::endl;
 
     if (playerScore == 7 || opponentScore == 7){
         //gameover
@@ -329,15 +393,29 @@ void TutorialApplication::updateScore(void){
 }
 
 void TutorialApplication::reset(void){
+    std::cout << "in reset" << std::endl;
     ball->reset(); 
     paddle1->reset(); 
     paddle2->reset();
+
 }
 
 void TutorialApplication::newGame(void){
     reset();
     playerScore = 0;
     opponentScore = 0;
+
+    scoreBoard->setText(getScoreBoardText());
+}
+
+std::string TutorialApplication::getScoreBoardText(void){
+
+    std::stringstream stream;
+
+    stream << "Player: " << playerScore <<
+         "\nOpponent: " << opponentScore;
+
+   return stream.str();
 }
 
 
@@ -432,13 +510,20 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         paddle2->updatePosition(ball->getNode()->getPosition());
     }
 
-    if (!(ball->inBounds())){
-      updateScore();
-    }
-
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
+
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
+    
+
+    checkCollisions();
+
+
     return true;
+}
+
+void TutorialApplication::checkCollisions(){
+    dynamicsWorld->contactPairTest(walls[4]->getRigidBody(), ball->getRigidBody(), *owcb);
+    dynamicsWorld->contactPairTest(walls[5]->getRigidBody(), ball->getRigidBody(), *pwcb);
 }
 
 bool TutorialApplication::mouseMoved(const OIS::MouseEvent &arg)
@@ -551,6 +636,8 @@ bool TutorialApplication::quit(const CEGUI::EventArgs& e){
     app.go();
     return 0;
 }
+
+
 
 //! [starter]
 

@@ -18,6 +18,9 @@ http://www.ogre3d.org/wiki/
 #ifndef __Bootstrap_h_
 #define __Bootstrap_h_
 
+#include <string>
+#include <sstream>
+
 #include <OgreEntity.h>
 #include <OgreCamera.h>
 #include <OgreLogManager.h>
@@ -80,6 +83,9 @@ http://www.ogre3d.org/wiki/
 
 //---------------------------------------------------------------------------
 
+struct OpponentWallCallback;
+struct PlayerWallCallback;
+
 class TutorialApplication : 
     public Ogre::FrameListener, public Ogre::WindowEventListener, 
     public OIS::KeyListener, public OIS::MouseListener
@@ -89,9 +95,11 @@ public:
     ~TutorialApplication(void);
 
     void go(void);
+    void updateScore(int player);
+
+    btDiscreteDynamicsWorld* dynamicsWorld;
 
 protected:
-    bool setup();
     bool configure(void);
     void chooseSceneManager(void);
     void createCamera(void);
@@ -110,14 +118,17 @@ protected:
     bool mouseMoved(const OIS::MouseEvent &arg);
     bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
     bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
+    void checkCollisions(void);
 
     void newGame(void);
-    void updateScore(void);
     void reset(void);
+    bool setup();
+
 
     bool quit(const CEGUI::EventArgs& e);
 
-    CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
+    std::string getScoreBoardText(void);
+
 
     // Adjust mouse clipping area
     void windowResized(Ogre::RenderWindow* rw);
@@ -144,35 +155,45 @@ protected:
 
     // Added for Mac compatibility
     Ogre::String                 m_ResourcePath;
+   
     bool* keys;
+
+    CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
+    CEGUI::Window *scoreBoard;
 
     //physics
     btDefaultCollisionConfiguration* collisionConfiguration;
     btCollisionDispatcher* dispatcher;
     btBroadphaseInterface* overlappingPairCache;
     btSequentialImpulseConstraintSolver* solver;
-    btDiscreteDynamicsWorld* dynamicsWorld;
     btCollisionShape* groundShape;
     btAlignedObjectArray<btCollisionShape*> collisionShapes;
 
     //game objects
     Paddle *paddle1;
     Paddle *paddle2;
-    Ball *ball;
     Wall **walls;
+    Ball *ball;
 
     //score
     int rounds;
     int playerScore;
     int opponentScore;
 
+    bool gameRunning;
+
     //GUI
     CEGUI::OgreRenderer* mRenderer;
+
+
+    PlayerWallCallback* pwcb;
+    OpponentWallCallback* owcb;
 
 #ifdef OGRE_STATIC_LIB
     Ogre::StaticPluginLoader m_StaticPluginLoader;
 #endif
 };
+
 
 //---------------------------------------------------------------------------
 

@@ -37,6 +37,13 @@ public:
 
    		}
 
+   		if ( pitch == 90 || pitch == -90){
+   			int temp = depth;
+   			depth = height;
+   			height=temp;
+
+   		}
+
         colShape = new btBoxShape(btVector3(btScalar(width),btScalar(height),btScalar(depth)));
 
         btTransform startTransform;
