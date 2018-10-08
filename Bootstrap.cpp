@@ -477,29 +477,40 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     mKeyboard->capture();
     mMouse->capture();
     
-    //b->Ball::move(evt);
-    if (mCamera && ball){
-      mCamera->lookAt(ball->getNode()->getPosition());
+    if(mCamera && ball){
+        Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
+        Ogre::Vector3 curPos = mCamNode->getPosition();
+        Ogre::Vector3 desiredPos = Ogre::Vector3(paddlePosition.x, 30, paddlePosition.z*2);
+        double diviser = 1; // make diviser > 1 for smooth camera
+        Ogre::Vector3 cameraPosition = Ogre::Vector3(curPos.x+(desiredPos.x-curPos.x)/diviser, paddlePosition.y, curPos.z+(desiredPos.z-curPos.z)/diviser);
+        mCamNode->setPosition(cameraPosition);
+        mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);
     }
 
-    if (keys[0]){
-        mCamNode->translate(0,0,-0.1);
-    }
-    if (keys[1]){
-        mCamNode->translate(-0.1,0,0);
-    }
-    if (keys[2]){
-        mCamNode->translate(0,0,0.1);
-    }
-    if (keys[3]){
-        mCamNode->translate(0.1,0,0);
-    }
-    if (keys[4]){
-        mCamNode->translate(0,0.1,0);
-    }
-    if (keys[5]){
-        mCamNode->translate(0,-0.1,0);
-    }
+
+    //b->Ball::move(evt);
+    // if (mCamera && ball){
+    //   mCamera->lookAt(ball->getNode()->getPosition());
+    // }
+
+    // if (keys[0]){
+    //     mCamNode->translate(0,0,-0.1);
+    // }
+    // if (keys[1]){
+    //     mCamNode->translate(-0.1,0,0);
+    // }
+    // if (keys[2]){
+    //     mCamNode->translate(0,0,0.1);
+    // }
+    // if (keys[3]){
+    //     mCamNode->translate(0.1,0,0);
+    // }
+    // if (keys[4]){
+    //     mCamNode->translate(0,0.1,0);
+    // }
+    // if (keys[5]){
+    //     mCamNode->translate(0,-0.1,0);
+    // }
     if (keys[6]){
        paddle1->moveLeft();
     }
@@ -511,13 +522,14 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         paddle2->updatePosition(ball->getNode()->getPosition());
     }
 
+    paddle1->playerUpdatePosition(mMouse->getMouseState().X.rel, -mMouse->getMouseState().Y.rel);
+
+
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
 
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
     
-
     checkCollisions();
-
 
     return true;
 }

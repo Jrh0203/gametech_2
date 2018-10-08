@@ -74,6 +74,13 @@ public:
 		body->setLinearVelocity(lvelocity);
 	}
 
+	void playerUpdatePosition(double xUpdate, double yUpdate)
+	{
+		body->activate(true);
+		btVector3 lvelocity(xUpdate*0.1, yUpdate*0.1, 0);
+		body->translate(lvelocity);
+	}
+
 	void updatePosition(Ogre::Vector3 ballPos){
 
 		Ogre::Vector3 myPos = node->getPosition();
