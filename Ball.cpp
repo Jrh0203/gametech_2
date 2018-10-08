@@ -9,6 +9,7 @@ public:
 		startPos = vector;
 		
 		ent = scnMgr->createEntity("sphere.mesh");
+		ent->setMaterialName("ball/Green");
 
 		node = scnMgr->getRootSceneNode()->createChildSceneNode();
 		node->attachObject(ent);

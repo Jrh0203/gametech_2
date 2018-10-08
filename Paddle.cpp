@@ -7,40 +7,45 @@ protected:
 	int color;
 
 public: 
-	Paddle (Ogre::SceneManager* scnMgr, btVector3 vector) 
+	Paddle (Ogre::SceneManager* scnMgr, btVector3 vector, bool isPlayer) 
 	: Object(scnMgr) {
 
-	startPos = vector;
+		startPos = vector;
 
-	 Ogre::ManualObject *cmo = createCubeMesh("manual", "");
-    cmo->convertToMesh("cube");
+		 Ogre::ManualObject *cmo = createCubeMesh("manual", "");
+	    cmo->convertToMesh("cube");
 
-    ent = scnMgr->createEntity("cube.mesh");
-		
-	node = scnMgr->getRootSceneNode()->createChildSceneNode();
-	node->attachObject(ent);	
-	node->setScale(Ogre::Vector3(0.05,0.05,0.05));
+	    ent = scnMgr->createEntity("cube.mesh");
 
-	//overwrite body from super class
-	colShape = new btBoxShape(btVector3(2.5,2.5,2.5));
+	    if(isPlayer){
+			ent->setMaterialName("paddle/Blue");
+		}else
+			ent->setMaterialName("paddle/Red");
+			
+		node = scnMgr->getRootSceneNode()->createChildSceneNode();
+		node->attachObject(ent);	
+		node->setScale(Ogre::Vector3(0.05,0.05,0.05));
 
-	btTransform startTransform;
-    startTransform.setIdentity();
+		//overwrite body from super class
+		colShape = new btBoxShape(btVector3(2.5,2.5,2.5));
 
-    mass = btScalar(50.f);
+		btTransform startTransform;
+	    startTransform.setIdentity();
 
-    btVector3 localInertia(0,0,0);
-        
-    if (isDynamic())
-        colShape->calculateLocalInertia(mass, localInertia);
+	    mass = btScalar(50.f);
 
-    startTransform.setOrigin(vector);
+	    btVector3 localInertia(0,0,0);
+	        
+	    if (isDynamic())
+	        colShape->calculateLocalInertia(mass, localInertia);
 
-    motionState = new MyMotionState(startTransform, node);
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, colShape, localInertia);
-    body = new btRigidBody(rbInfo);
-    body->setRestitution(1.0);
-    body->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
+	    startTransform.setOrigin(vector);
+
+	    motionState = new MyMotionState(startTransform, node);
+	    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, colShape, localInertia);
+	    body = new btRigidBody(rbInfo);
+	    body->setRestitution(1.0);
+	    body->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 
 	}
  

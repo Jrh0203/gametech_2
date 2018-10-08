@@ -136,11 +136,11 @@ void TutorialApplication::createBulletSim(){
 void TutorialApplication::createScene()
     {
 
-        paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40));
+        paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40), true);
         collisionShapes.push_back(paddle1->getCollisionShape());
         dynamicsWorld->addRigidBody(paddle1->getRigidBody());
 
-        paddle2 = new Paddle(mSceneMgr, btVector3(0, 0, -40));
+        paddle2 = new Paddle(mSceneMgr, btVector3(0, 0, -40), false);
         collisionShapes.push_back(paddle2->getCollisionShape());
         dynamicsWorld->addRigidBody(paddle2->getRigidBody());
    
@@ -216,7 +216,8 @@ void TutorialApplication::setupResources(void)
         }
     }
 
-    }
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation("./materials", "FileSystem");
+}
 
 void TutorialApplication::chooseSceneManager(void)
 {
