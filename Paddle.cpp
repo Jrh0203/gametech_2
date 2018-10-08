@@ -47,9 +47,21 @@ public:
 	    body->setRestitution(1.0);
 	    body->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 
+	    color = 0;
 	}
  
 	~Paddle(){}
+
+	void changeColor(){
+		color = (color+1)%3;
+		//0 Blue, 1 Red, 2 Green for now
+		if(color == 0)
+			ent->setMaterialName("paddle/Blue");
+		if(color == 1)
+			ent->setMaterialName("paddle/Red");
+		if(color == 2)
+			ent->setMaterialName("paddle/Green");
+	}
 
 
 	void moveLeft(){

@@ -436,7 +436,8 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_LEFT: keys[6]=true; break;
       case OIS::KC_RIGHT: keys[7]=true; break;
       case OIS::KC_R: reset(); break;
-      case OIS::KC_SPACE: ball->push();
+      case OIS::KC_SPACE: ball->push(); break;
+      case OIS::KC_K: paddle1->changeColor(); break;
     }
 
   CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
@@ -482,7 +483,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
         Ogre::Vector3 curPos = mCamNode->getPosition();
         Ogre::Vector3 desiredPos = Ogre::Vector3(paddlePosition.x, 30, paddlePosition.z*2);
-        double diviser = 1; // make diviser > 1 for smooth camera
+        double diviser = 1; // make diviser > 1 for smooth camera, probably a number in the low hundereds maybe
         Ogre::Vector3 cameraPosition = Ogre::Vector3(curPos.x+(desiredPos.x-curPos.x)/diviser, paddlePosition.y, curPos.z+(desiredPos.z-curPos.z)/diviser);
         mCamNode->setPosition(cameraPosition);
         mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);

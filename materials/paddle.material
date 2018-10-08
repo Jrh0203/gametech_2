@@ -33,6 +33,23 @@ material paddle/Red
 	}
 }
 
+material paddle/Green
+{
+	technique
+	{
+		pass
+		{
+		lighting off
+		scene_blend add
+		depth_write off
+			texture_unit
+			{
+				colour_op_ex source1 src_manual src_current 0 1 0
+			}
+		}
+	}
+}
+
 material ball/Green
 {
 	technique
