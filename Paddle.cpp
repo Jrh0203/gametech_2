@@ -82,17 +82,20 @@ public:
 	}
 
 	void updatePosition(Ogre::Vector3 ballPos){
-
 		Ogre::Vector3 myPos = node->getPosition();
-
-		body->activate(true);
-
-		if (ballPos.x < myPos.x){
-			body->setLinearVelocity(btVector3(-15, 0, 0));
-		} else if (ballPos.x > myPos.x){
-			body->setLinearVelocity(btVector3(15, 0, 0));
+		btVector3 updatedLinearVelocity(0, 0, 0);
+		double minDistance = 3;
+		if ((ballPos.x - myPos.x) < -minDistance){
+			updatedLinearVelocity += btVector3(-15, 0, 0);
+		} else if ((ballPos.x - myPos.x) > minDistance){
+			updatedLinearVelocity += btVector3(15, 0, 0);
 		}
-
+		if ((ballPos.y - myPos.y) < -minDistance){
+			updatedLinearVelocity += btVector3(0, -15, 0);
+		} else if ((ballPos.y - myPos.y) > minDistance){
+			updatedLinearVelocity += btVector3(0, 15, 0);
+		}
+		body->setLinearVelocity(updatedLinearVelocity);
 	}
 
 	Ogre::ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName) {
