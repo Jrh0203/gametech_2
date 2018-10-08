@@ -135,6 +135,7 @@ void TutorialApplication::createBulletSim(){
 
 void TutorialApplication::createScene()
     {
+        mSceneMgr->setSkyDome(true, "paddle/CloudySky", 5, 8);
 
         paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40), true);
         collisionShapes.push_back(paddle1->getCollisionShape());

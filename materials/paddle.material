@@ -61,3 +61,21 @@ material paddle/Checker
 		}
 	}
 }
+
+material paddle/CloudySky
+{
+	technique
+	{
+		pass
+		{
+			lighting off
+			depth_write off
+
+			texture_unit
+			{
+				texture theclouds.jpg
+				scroll_anim 0.15 0
+			}
+		}
+	}
+}
