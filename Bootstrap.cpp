@@ -135,7 +135,7 @@ void TutorialApplication::createBulletSim(){
 
 void TutorialApplication::createScene()
     {
-        mSceneMgr->setSkyDome(true, "paddle/CloudySky", 5, 8);
+        //mSceneMgr->setSkyDome(true, "paddle/CloudySky", 5, 8);
 
         paddle1 = new Paddle(mSceneMgr, btVector3(0, 0, 40), true);
         collisionShapes.push_back(paddle1->getCollisionShape());
@@ -153,7 +153,7 @@ void TutorialApplication::createScene()
 
 
         //make all the walls, code could probably be prettier lol 
-        walls = new Wall*[6];
+        walls = new Wall*[4];
         //make ground
         walls[0] = new Wall(mSceneMgr, btVector3(0,-56,0), 0, 0, 0);
         collisionShapes.push_back(walls[0]->getCollisionShape());
@@ -322,6 +322,43 @@ void TutorialApplication::setupGUI(){
         //score
 }
 
+void TutorialApplication::startFireworks(){
+    if (fireworksOn==false){
+        //sunParticle->clear();
+        mSceneMgr->destroyParticleSystem("Sun");
+        sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
+        Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("Fireworks");
+        particleNode->attachObject(sunParticle);
+        particleNode->setPosition(0,-40,-300);
+        fireworksOn = true;
+    } else {
+        Ogre::SceneNode* itemNode = mSceneMgr->getSceneNode("Fireworks");
+        //destroyAllAttachedMovableObjects(itemNode);
+        itemNode->removeAndDestroyAllChildren();
+        mSceneMgr->destroySceneNode(itemNode);
+        fireworksOn = false;
+    }
+    
+}
+
+void TutorialApplication::explode(Ogre::Vector3 pos){
+    if (mSceneMgr->hasSceneNode("BallExplode"))
+    {
+        Ogre::SceneNode* itemNode = mSceneMgr->getSceneNode("BallExplode");
+        itemNode->removeAndDestroyAllChildren();
+        mSceneMgr->destroySceneNode(itemNode);    
+    }
+    
+    
+
+    mSceneMgr->destroyParticleSystem("Explode");
+    ballParticle = mSceneMgr->createParticleSystem("Explode", "OOB");
+    Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("BallExplode");
+    particleNode->attachObject(ballParticle);
+
+    particleNode->setPosition(pos.x,pos.y, pos.z);
+}
+
 
 bool TutorialApplication::setup()
 {
@@ -353,6 +390,8 @@ bool TutorialApplication::setup()
     lightNode->attachObject(light);
     lightNode->setPosition(0, 10, 0);
 
+
+
     // register our scene with the RTSS
 
     //! [lightingsset]
@@ -363,6 +402,8 @@ bool TutorialApplication::setup()
     createScene();
     setupGUI();
     createFrameListener();
+    sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
+    ballParticle = mSceneMgr->createParticleSystem("Explode", "OOB");
     
     //! [planesetmat] */
     return true;
@@ -396,9 +437,12 @@ void TutorialApplication::updateScore(int player){
 
 void TutorialApplication::reset(void){
     std::cout << "in reset" << std::endl;
-    ball->reset(); 
-    paddle1->reset(); 
-    paddle2->reset();
+    explode(ball->node->getPosition());
+    ball->reset();
+    paddle1->clearForce();
+
+    //paddle1->reset(); 
+    //paddle2->reset();
 
 }
 
@@ -438,6 +482,8 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_R: reset(); break;
       case OIS::KC_SPACE: ball->push(); break;
       case OIS::KC_K: paddle1->changeColor(); break;
+      case OIS::KC_F: startFireworks(); break;
+      case OIS::KC_T: explode(Ogre::Vector3()); break;
     }
 
   CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();

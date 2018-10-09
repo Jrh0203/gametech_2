@@ -96,3 +96,20 @@ material paddle/CloudySky
 		}
 	}
 }
+
+material wall/Clear
+{
+	technique
+	{
+		pass
+		{
+		lighting on
+		scene_blend alpha_blend
+			texture_unit
+			{
+				colour_op_ex source1 src_manual src_current 1 1 1
+				alpha_op_ex source1 src_manual src_current 0.0
+			}
+		}
+	}
+}

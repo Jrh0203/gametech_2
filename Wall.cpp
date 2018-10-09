@@ -24,6 +24,11 @@ public:
     	node->pitch(Ogre::Degree(pitch));
     	node->roll(Ogre::Degree(roll));
 
+      if (pitch==90){
+        //ent->setMaterialName("wall/Clear");
+        ent->setVisible(false);
+      }
+
    		int width = 100;
    		int height = 1;
    		int depth = 100;

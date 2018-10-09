@@ -124,6 +124,9 @@ protected:
     void reset(void);
     bool setup();
 
+    void startFireworks();
+    void explode(const Ogre::Vector3);
+
 
     bool quit(const CEGUI::EventArgs& e);
 
@@ -155,8 +158,11 @@ protected:
 
     // Added for Mac compatibility
     Ogre::String                 m_ResourcePath;
-   
+
     bool* keys;
+    bool fireworksOn;
+    Ogre::ParticleSystem* sunParticle;
+    Ogre::ParticleSystem* ballParticle;
 
     CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
     CEGUI::Window *scoreBoard;

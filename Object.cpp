@@ -3,7 +3,7 @@
 
 class Object { 
 protected: 
-	Ogre::SceneNode* node; 
+	
 	Ogre::Entity *ent;
 	btRigidBody* body;
 	btCollisionShape* colShape;
@@ -12,6 +12,7 @@ protected:
 	btVector3 startPos;
 
 public: 
+	Ogre::SceneNode* node; 
 	Object(Ogre::SceneManager* scnMgr){}
 
 	~Object(){}
@@ -27,12 +28,7 @@ public:
 	MyMotionState* getMotionState(){return motionState;}
 
 	void reset(){
-		btVector3 zeroVector(0, 0, 0);
-
-		body->clearForces();
-		body->setLinearVelocity(zeroVector);
-		body->setAngularVelocity(zeroVector);
-
+		clearForce();
 		
 		btTransform transform;
 		transform.setIdentity();
@@ -41,6 +37,14 @@ public:
 
 		body->setWorldTransform(transform);
 		motionState->setWorldTransform(transform);
+	}
+
+	void clearForce(){
+		btVector3 zeroVector(0, 0, 0);
+
+		body->clearForces();
+		body->setLinearVelocity(zeroVector);
+		body->setAngularVelocity(zeroVector);
 	}
 
 };
