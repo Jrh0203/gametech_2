@@ -43,11 +43,11 @@ public:
 
 	void push(){
 		body->activate(true);
-		body->applyCentralImpulse( btVector3(1, 0, 3));
+		body->applyCentralImpulse( btVector3(1, 1, 2));
 	}
 
 	void explode(){
-		reset();
+	
 	}
 
 };
