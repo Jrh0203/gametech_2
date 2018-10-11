@@ -94,6 +94,8 @@ public:
 	}
 
 	void updatePosition(Ogre::Vector3 ballPos){
+		
+		body->activate(true);	
 		Ogre::Vector3 myPos = node->getPosition();
 		btVector3 updatedLinearVelocity(0, 0, 0);
 		double minDistance = 3;

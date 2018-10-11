@@ -97,8 +97,6 @@ public:
     void go(void);
     void updateScore(int player);
 
-    btDiscreteDynamicsWorld* dynamicsWorld;
-
 protected:
     bool configure(void);
     void chooseSceneManager(void);
@@ -121,8 +119,11 @@ protected:
     void checkCollisions(void);
 
     void newGame(void);
+    void pauseGame(void);
+    void resumeGame(void);
     void reset(void);
-    bool setup();
+    bool setup(void);
+
 
     void startFireworks();
     void explode(const Ogre::Vector3);
@@ -165,13 +166,13 @@ protected:
     Ogre::ParticleSystem* ballParticle;
 
     CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
-    CEGUI::Window *scoreBoard;
 
     //physics
     btDefaultCollisionConfiguration* collisionConfiguration;
     btCollisionDispatcher* dispatcher;
     btBroadphaseInterface* overlappingPairCache;
     btSequentialImpulseConstraintSolver* solver;
+    btDiscreteDynamicsWorld* dynamicsWorld;
     btCollisionShape* groundShape;
     btAlignedObjectArray<btCollisionShape*> collisionShapes;
 
@@ -191,6 +192,10 @@ protected:
     //GUI
     CEGUI::OgreRenderer* mRenderer;
 
+    CEGUI::Window *menuSheet;
+    CEGUI::Window *gameSheet;
+    CEGUI::Window *pauseSheet;
+    CEGUI::Window *scoreBoard;
 
     PlayerWallCallback* pwcb;
     OpponentWallCallback* owcb;

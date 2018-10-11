@@ -167,7 +167,7 @@ void TutorialApplication::createScene()
         collisionShapes.push_back(walls[2]->getCollisionShape());
         dynamicsWorld->addRigidBody(walls[2]->getRigidBody());
 
-        walls[3] = new Wall(mSceneMgr, btVector3(0, 50, 0), 0, 0, 180);
+        walls[3] = new Wall(mSceneMgr, btVector3(0, 44, 0), 0, 0, 180);
         collisionShapes.push_back(walls[3]->getCollisionShape());
         dynamicsWorld->addRigidBody(walls[3]->getRigidBody());
 
@@ -289,6 +289,8 @@ void TutorialApplication::createFrameListener(void)
 
 void TutorialApplication::setupGUI(){
         mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
+
+
         CEGUI::ImageManager::setImagesetDefaultResourceGroup("Imagesets");
         CEGUI::Font::setDefaultResourceGroup("Fonts");
         CEGUI::Scheme::setDefaultResourceGroup("Schemes");
@@ -300,26 +302,84 @@ void TutorialApplication::setupGUI(){
         
         
         CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
-        CEGUI::Window *sheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+        gameSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+        menuSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+        pauseSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
 
-        //quit button
-        CEGUI::Window *quit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-        quit->setText("Quit");
-        quit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
-        sheet->addChild(quit);
-        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
 
-        quit->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        //quit button-gois in ingame GUI and menu GUI
+        CEGUI::Window *gameQuit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        gameQuit->setText("Quit");
+        gameQuit->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0,0)));
+        gameQuit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        gameSheet->addChild(gameQuit);
+        gameQuit->subscribeEvent(CEGUI::PushButton::EventClicked, 
         CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
+
+        CEGUI::Window *menuQuit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        menuQuit->setText("Quit");
+        menuQuit->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0,0)));
+        menuQuit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        menuSheet->addChild(menuQuit);
+        //CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+
+        menuQuit->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
+
+        CEGUI::Window *pauseQuit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        pauseQuit->setText("Quit");
+        menuQuit->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0,0)));
+        pauseQuit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        pauseSheet->addChild(pauseQuit);
+        //CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+
+        pauseQuit->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
+
+        // CEGUI::Window *gameQuit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        // gameQuit->setText("Quit");
+        // gameQuit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        // gameQuit->addChild(gameQuit);
+        // gameQuit->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        // CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
+
 
         scoreBoard = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         scoreBoard->setPosition(CEGUI::UVector2(CEGUI::UDim(0.85,0),CEGUI::UDim(0,0)));
         scoreBoard->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.15, 0)));
         scoreBoard->setText(getScoreBoardText());
-        sheet->addChild(scoreBoard);
-        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+        gameSheet->addChild(scoreBoard);
+        //CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
+        
+        CEGUI::Window *pause = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        pause->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0.05,0)));
+        pause->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        pause->setText("Pause");
+        pause->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::pauseGame, this));
+        gameSheet->addChild(pause);
 
-        //score
+
+        CEGUI::Window *start = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        start->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
+        start->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        start->setText("Start");
+        start->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
+
+        menuSheet->addChild(start);
+
+        CEGUI::Window *resume = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        resume->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
+        resume->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        resume->setText("Resume");
+        resume->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::resumeGame, this));
+
+        pauseSheet->addChild(resume);
+
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(menuSheet);
+        gameRunning = false;
 }
 
 void TutorialApplication::startFireworks(){
@@ -424,19 +484,15 @@ void TutorialApplication::updateScore(int player){
     scoreBoard->setText(getScoreBoardText());
     reset();
 
-    std::cout << "Score: " << playerScore << " vs " << opponentScore << std::endl;
-    std::cout << "Updated score" << std::endl;
-
     if (playerScore == 7 || opponentScore == 7){
         //gameover
-
-        newGame();
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(menuSheet);
+        gameRunning = false;
     }
 
 }
 
 void TutorialApplication::reset(void){
-    std::cout << "in reset" << std::endl;
     explode(ball->node->getPosition());
     ball->reset();
     paddle1->clearForce();
@@ -447,11 +503,24 @@ void TutorialApplication::reset(void){
 }
 
 void TutorialApplication::newGame(void){
-    reset();
+    //reset();
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(gameSheet);
+    gameRunning = true;
     playerScore = 0;
     opponentScore = 0;
 
     scoreBoard->setText(getScoreBoardText());
+    ball->push();
+}
+
+void TutorialApplication::pauseGame(){
+    gameRunning=false;
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(pauseSheet);
+}
+
+void TutorialApplication::resumeGame(){
+    gameRunning=true;
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(gameSheet); 
 }
 
 std::string TutorialApplication::getScoreBoardText(void){
@@ -470,7 +539,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
     //std::cerr << "Key! " << '\n';
 
     switch(arg.key){
-      case OIS::KC_ESCAPE: mShutDown = true; break;
+      case OIS::KC_ESCAPE: if (gameRunning) pauseGame(); else mShutDown = true; break;
       case OIS::KC_W:  keys[0]=true; break;
       case OIS::KC_A:  keys[1]=true; break;
       case OIS::KC_S:  keys[2]=true; break;
@@ -498,7 +567,6 @@ bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg)
   
     //std::cerr << "Key! " << '\n';
     switch(arg.key){
-      case OIS::KC_ESCAPE: mShutDown = true; break;
       case OIS::KC_W:  keys[0]=false; break;
       case OIS::KC_A:  keys[1]=false; break;
       case OIS::KC_S:  keys[2]=false; break;
@@ -524,6 +592,8 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
     mKeyboard->capture();
     mMouse->capture();
+
+    if (gameRunning){
     
     if(mCamera && ball){
         Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
@@ -578,6 +648,27 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
     
     checkCollisions();
+    } else {
+                //if game is paused or hasnt started, move camera with arrow keys
+    if (keys[0]){
+         mCamNode->translate(0,0,-0.1);
+     }
+     if (keys[1]){
+         mCamNode->translate(-0.1,0,0);
+    }
+     if (keys[2]){
+        mCamNode->translate(0,0,0.1);
+     }
+     if (keys[3]){
+         mCamNode->translate(0.1,0,0);
+     }
+     if (keys[4]){
+         mCamNode->translate(0,0.1,0);
+    }
+     if (keys[5]){
+     mCamNode->translate(0,-0.1,0);
+     }
+    }
 
     return true;
 }
