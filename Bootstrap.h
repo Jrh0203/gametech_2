@@ -85,6 +85,7 @@ http://www.ogre3d.org/wiki/
 
 struct OpponentWallCallback;
 struct PlayerWallCallback;
+struct Paddle1Callback;
 
 class TutorialApplication : 
     public Ogre::FrameListener, public Ogre::WindowEventListener, 
@@ -96,6 +97,7 @@ public:
 
     void go(void);
     void updateScore(int player);
+    void checkColor(int player);
 
 protected:
     bool configure(void);
@@ -199,6 +201,7 @@ protected:
 
     PlayerWallCallback* pwcb;
     OpponentWallCallback* owcb;
+    Paddle1Callback* p1cb;
 
 #ifdef OGRE_STATIC_LIB
     Ogre::StaticPluginLoader m_StaticPluginLoader;

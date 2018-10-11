@@ -1,7 +1,9 @@
+#include <stdlib.h>
+#include <time.h>
+
 class Ball : public Object { 
 
 protected:
-	int color;
 
 public: 
 	Ball(Ogre::SceneManager* scnMgr, btVector3 vector) : Object(scnMgr){
@@ -36,7 +38,8 @@ public:
         body->setRestitution(1.0);
         body->setFriction(0.0);
         body->setDamping(0, 0);
-        color = 0;
+        srand(time(NULL)); //initialized based on time to make it "random"
+        randomizeColor();
 	}
 
 	~Ball(){}; 
@@ -46,8 +49,15 @@ public:
 		body->applyCentralImpulse( btVector3(1, 1, 2));
 	}
 
-	void explode(){
-	
+	void randomizeColor(){
+		color = (rand() % 3);
+		//0 Blue, 1 Red, 2 Green for now
+		if(color == 0)
+			ent->setMaterialName("paddle/Blue");
+		if(color == 1)
+			ent->setMaterialName("paddle/Red");
+		if(color == 2)
+			ent->setMaterialName("paddle/Green");
 	}
 
 };

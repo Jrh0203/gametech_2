@@ -4,7 +4,6 @@
 class Paddle : public Object { 
 
 protected:
-	int color;
 
 public: 
 	Paddle (Ogre::SceneManager* scnMgr, btVector3 vector, bool isPlayer) 
@@ -94,7 +93,7 @@ public:
 	}
 
 	void updatePosition(Ogre::Vector3 ballPos){
-		
+
 		body->activate(true);	
 		Ogre::Vector3 myPos = node->getPosition();
 		btVector3 updatedLinearVelocity(0, 0, 0);

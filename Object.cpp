@@ -10,6 +10,7 @@ protected:
 	btScalar mass;
 	MyMotionState* motionState;
 	btVector3 startPos;
+	int color;
 
 public: 
 	Ogre::SceneNode* node; 
@@ -46,5 +47,7 @@ public:
 		body->setLinearVelocity(zeroVector);
 		body->setAngularVelocity(zeroVector);
 	}
+
+	int getColor(){ return color;}
 
 };

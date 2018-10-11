@@ -41,7 +41,7 @@ struct OpponentWallCallback :public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
-        context->updateScore(1);
+        context->updateScore(0);
     }
 
     TutorialApplication* context;
@@ -59,7 +59,25 @@ struct PlayerWallCallback : public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
-        context->updateScore(2);
+        context->updateScore(1);
+    }
+
+    TutorialApplication* context;
+};
+
+struct Paddle1Callback : public btCollisionWorld::ContactResultCallback
+{
+    Paddle1Callback(TutorialApplication* ptr) : context(ptr) {}
+
+    btScalar addSingleResult(btManifoldPoint& cp,
+        const btCollisionObjectWrapper* colObj0Wrap,
+        int partId0,
+        int index0,
+        const btCollisionObjectWrapper* colObj1Wrap,
+        int partId1,
+        int index1)
+    {
+        context->checkColor(1);
     }
 
     TutorialApplication* context;
@@ -181,6 +199,7 @@ void TutorialApplication::createScene()
 
         pwcb = new PlayerWallCallback(this);
         owcb = new OpponentWallCallback(this);
+        p1cb = new Paddle1Callback(this);
   }
 
 
@@ -473,16 +492,38 @@ void TutorialApplication::destroyScene(void)
 {
 }
 
-void TutorialApplication::updateScore(int player){
+void TutorialApplication::checkColor(int player){
+    //reset();
 
-    if (player == 1){
-        playerScore++;
+    //std::cout << "Paddle collision" << std::endl;
+
+    if (player){
+        //std::cout << "Ball: " << ball->getColor() << std::endl;
+        //std::cout << "Paddle1: " << paddle1->getColor() << std::endl;
+        if (paddle1->getColor() != ball->getColor()){
+            //std::cout << "updating score, paddle 1 was not correct color" << std::endl;
+            updateScore(player);
+        }
+     
     } else {
+                // std::cout << "Ball: " << ball->getColor() << std::endl;
+           //std::cout << "Paddle2: " << paddle2->getColor() << std::endl;
+        if (paddle2->getColor() != ball->getColor()){
+        updateScore(player);
+        }
+    }
+}
+
+void TutorialApplication::updateScore(int player){
+    reset();
+
+    if (player){
         opponentScore++;
+    } else {
+        playerScore++;
     }
 
     scoreBoard->setText(getScoreBoardText());
-    reset();
 
     if (playerScore == 7 || opponentScore == 7){
         //gameover
@@ -495,6 +536,7 @@ void TutorialApplication::updateScore(int player){
 void TutorialApplication::reset(void){
     explode(ball->node->getPosition());
     ball->reset();
+    ball->randomizeColor();
     paddle1->clearForce();
 
     //paddle1->reset(); 
@@ -648,7 +690,9 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
     
     checkCollisions();
-    } else {
+    
+    } 
+    else {
                 //if game is paused or hasnt started, move camera with arrow keys
     if (keys[0]){
          mCamNode->translate(0,0,-0.1);
@@ -676,6 +720,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 void TutorialApplication::checkCollisions(){
     dynamicsWorld->contactPairTest(walls[4]->getRigidBody(), ball->getRigidBody(), *owcb);
     dynamicsWorld->contactPairTest(walls[5]->getRigidBody(), ball->getRigidBody(), *pwcb);
+    dynamicsWorld->contactPairTest(paddle1->getRigidBody(), ball->getRigidBody(), *p1cb);
 }
 
 bool TutorialApplication::mouseMoved(const OIS::MouseEvent &arg)
