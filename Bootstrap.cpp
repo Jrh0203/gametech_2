@@ -501,7 +501,7 @@ bool TutorialApplication::setupSDL(){
         success = false; 
     } 
 
-    wVictory = Mix_LoadWAV( "sounds/victory.wav" ); 
+    wVictory = Mix_LoadWAV( "sounds/player_win.wav" ); 
     if( wVictory == NULL ) { 
         printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() ); 
         success = false; 
@@ -529,9 +529,6 @@ void TutorialApplication::switchSound(){
 void TutorialApplication::startFireworks(){
     if (fireworksOn==false){
         //sunParticle->clear();
-        if (soundEnabled){
-            Mix_PlayChannel(-1, wVictory, 0);
-        }
         mSceneMgr->destroyParticleSystem("Sun");
         sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
         Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("Fireworks");
@@ -652,11 +649,15 @@ void TutorialApplication::updateScore(int player){
 
     if (playerScore == 7 || opponentScore == 7){
         //gameover
-        startFireworks();
 
         std::string winner = (playerScore == 7) ? "Player 1" : "Player 2";
 
         victoryText->setText(winner + " wins!");
+
+        if (playerScore == 7 && soundEnabled){
+            Mix_PlayChannel(-1, wVictory, 0);
+            startFireworks();
+        }
 
         CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(restartSheet);
