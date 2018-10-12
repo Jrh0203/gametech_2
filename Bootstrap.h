@@ -118,6 +118,10 @@ public:
 
     int ballTrigger = -1;
     int delay;
+    int collisionTimer;
+
+    void explode(const Ogre::Vector3);
+    void clang(const Ogre::Vector3);
 
 protected:
     bool configure(void);
@@ -148,7 +152,7 @@ protected:
 
 
     void startFireworks();
-    void explode(const Ogre::Vector3);
+
 
 
     bool quit(const CEGUI::EventArgs& e);
@@ -188,6 +192,7 @@ protected:
     bool fireworksOn;
     Ogre::ParticleSystem* sunParticle;
     Ogre::ParticleSystem* ballParticle;
+    Ogre::ParticleSystem* clangParticle;
 
     CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 

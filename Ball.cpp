@@ -57,6 +57,7 @@ public:
 		if (neg) { z = -z; } //chance to start towards opponent
 
 		body->applyCentralImpulse( btVector3(x, y, z));
+		startVel = body->getLinearVelocity();
 	}
 
 	void speedUp(float mult){

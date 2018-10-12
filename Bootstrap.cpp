@@ -82,6 +82,7 @@ struct PaddleCallback : public btCollisionWorld::ContactResultCallback
 
 struct SideWallCallback : public btCollisionWorld::ContactResultCallback
 {
+
     SideWallCallback(TutorialApplication* ptr) : context(ptr) {}
 
     btScalar addSingleResult(btManifoldPoint& cp,
@@ -92,10 +93,25 @@ struct SideWallCallback : public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
-        if(context->soundEnabled){
-            Mix_PlayChannel(-1, context->wBounce, 0);
+        
+        if (context->collisionTimer==0){
+            if(context->soundEnabled){
+                Mix_PlayChannel(-1, context->wBounce, 0);
+            }
+            /*
+            Ogre::Vector3 pos = context->ball->node->getPosition();
+            btVector3 vel = context->ball->body->getLinearVelocity();
+            Ogre::Vector3 vel2 = Ogre::Vector3(vel[0],vel[1],vel[2]);
+            vel2 = vel2.normalise();
+            Ogre::Vector3 pos2 = pos+vel2*.05;
+            context->clang(pos2);
+            */
+            context->collisionTimer = 500;
         }
+        
+
     }
+    
 
     TutorialApplication* context;
 };
@@ -123,7 +139,8 @@ TutorialApplication::TutorialApplication()
   soundEnabled=true;
   fireworksOn=false;
 
-  delay = 7;
+  delay = 15;
+  collisionTimer = 0;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
     m_ResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
@@ -566,6 +583,24 @@ void TutorialApplication::explode(Ogre::Vector3 pos){
     particleNode->setPosition(pos.x,pos.y, pos.z);
 }
 
+void TutorialApplication::clang(Ogre::Vector3 pos){
+    if (mSceneMgr->hasSceneNode("BallClang"))
+    {
+        Ogre::SceneNode* itemNode = mSceneMgr->getSceneNode("BallClang");
+        itemNode->removeAndDestroyAllChildren();
+        mSceneMgr->destroySceneNode(itemNode);    
+    }
+    
+    
+
+    mSceneMgr->destroyParticleSystem("Clang");
+    ballParticle = mSceneMgr->createParticleSystem("Clang", "Clang");
+    Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("BallClang");
+    particleNode->attachObject(clangParticle);
+
+    particleNode->setPosition(pos.x,pos.y, pos.z);
+}
+
 
 bool TutorialApplication::setup()
 {
@@ -612,6 +647,7 @@ bool TutorialApplication::setup()
     createFrameListener();
     sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
     ballParticle = mSceneMgr->createParticleSystem("Explode", "OOB");
+    clangParticle = mSceneMgr->createParticleSystem("Clang", "Clang");
     
     //! [planesetmat] */
     return true;
@@ -735,6 +771,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_K: paddle1->changeColor(); break;
       case OIS::KC_F: startFireworks(); break;
       case OIS::KC_T: explode(Ogre::Vector3()); break;
+      case OIS::KC_G: clang(ball->node->getPosition()); break;
     }
 
   CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
@@ -821,6 +858,10 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         ballTrigger-=1;
         ball->speedUp(1.12);
         paddle2->speedUp(1.12);
+    }
+
+    if (collisionTimer>0){
+        collisionTimer-=1;
     }
     
     } 

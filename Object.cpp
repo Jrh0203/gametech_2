@@ -5,7 +5,7 @@ class Object {
 protected: 
 	
 	Ogre::Entity *ent;
-	btRigidBody* body;
+	
 	btCollisionShape* colShape;
 	btScalar mass;
 	MyMotionState* motionState;
@@ -16,6 +16,9 @@ protected:
 public: 
 	Ogre::SceneNode* node; 
 	Object(Ogre::SceneManager* scnMgr){}
+	btRigidBody* body;
+
+	btVector3 startVel;
 
 	~Object(){}
 
