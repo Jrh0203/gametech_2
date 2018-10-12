@@ -70,11 +70,11 @@ public:
 		color%=3;
 		//0 Blue, 1 Red, 2 Green for now
 		if(color == 0)
-			ent->setMaterialName("paddle/Blue");
+			ent->setMaterialName("ball/Blue");
 		if(color == 1)
-			ent->setMaterialName("paddle/Red");
+			ent->setMaterialName("ball/Red");
 		if(color == 2)
-			ent->setMaterialName("paddle/Green");
+			ent->setMaterialName("ball/Green");
 	}
 
 };

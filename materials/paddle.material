@@ -9,7 +9,7 @@ material paddle/Blue
 		depth_write off
 			texture_unit
 			{
-				colour_op_ex source1 src_manual src_current 0 0 1
+				colour_op_ex source1 src_manual src_current 0 0 0.8
 				texture checker.png
 			}
 		}
@@ -27,7 +27,7 @@ material paddle/Red
 		depth_write off
 			texture_unit
 			{
-				colour_op_ex source1 src_manual src_current 1 0 0
+				colour_op_ex source1 src_manual src_current 0.8 0 0
 			}
 		}
 	}
@@ -44,7 +44,7 @@ material paddle/Green
 		depth_write off
 			texture_unit
 			{
-				colour_op_ex source1 src_manual src_current 0 1 0
+				colour_op_ex source1 src_manual src_current 0 0.8 0
 			}
 		}
 	}
@@ -59,11 +59,43 @@ material ball/Green
 		lighting on
 			texture_unit
 			{
-				colour_op_ex source1 src_manual src_current 0 1 0
+				colour_op_ex source1 src_manual src_current 0.2 1 0.2
 			}
 		}
 	}
 }
+
+material ball/Red
+{
+	technique
+	{
+		pass
+		{
+		lighting on
+			texture_unit
+			{
+				colour_op_ex source1 src_manual src_current 1 0.2 0.2
+			}
+		}
+	}
+}
+
+material ball/Blue
+{
+	technique
+	{
+		pass
+		{
+		lighting on
+			texture_unit
+			{
+				colour_op_ex source1 src_manual src_current 0.2 0.2 1
+			}
+		}
+	}
+}
+
+
 
 material paddle/Checker
 {
