@@ -41,6 +41,9 @@ struct OpponentWallCallback :public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
+        if (context->soundEnabled){
+            Mix_PlayChannel(-1, context->wBounce, 0);
+        }
         context->updateScore(0);
     }
 
@@ -59,6 +62,9 @@ struct PlayerWallCallback : public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
+        if (context->soundEnabled){
+            Mix_PlayChannel(-1, context->wBounce, 0);
+        }
         context->updateScore(1);
     }
 
@@ -104,6 +110,7 @@ TutorialApplication::TutorialApplication()
   playerScore = 0;
   opponentScore = 0;
   gameRunning = true;
+  soundEnabled=true;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
     m_ResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
@@ -114,6 +121,13 @@ TutorialApplication::TutorialApplication()
 
 TutorialApplication::~TutorialApplication()
 {
+    //free sdl sounds
+    Mix_FreeChunk( wBounce);
+    Mix_FreeChunk( wExplode);
+    wBounce = NULL;
+    wExplode = NULL;
+    Mix_Quit();
+    SDL_Quit();
 }
 
 
@@ -127,6 +141,7 @@ bool TutorialApplication::configure(void)
         // If returned true, user clicked OK so initialise.
         // Here we choose to let the system create a default rendering window by passing 'true'.
         mWindow = mRoot->initialise(true, "TutorialApplication Render Window");
+
 
         return true;
     }
@@ -307,6 +322,7 @@ void TutorialApplication::createFrameListener(void)
 }
 
 void TutorialApplication::setupGUI(){
+        //this function could be a lot prettier but I don't feel like rewriting it
         mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
 
 
@@ -397,8 +413,55 @@ void TutorialApplication::setupGUI(){
 
         pauseSheet->addChild(resume);
 
+        sound = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        sound->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0.05,0)));
+        sound->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        sound->setText("Sound: ON");
+        sound->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::switchSound, this));
+        pauseSheet->addChild(sound);
+
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(menuSheet);
         gameRunning = false;
+}
+
+bool TutorialApplication::setupSDL(){
+    bool success = true;
+
+    //Initialize SDL 
+    if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) < 0 ) { 
+        printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() ); 
+        success = false; 
+    }
+
+    //initialize mixer
+    if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 ) { 
+        printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() ); 
+        success = false; 
+    }
+
+    //load sounds
+    wBounce = Mix_LoadWAV( "sounds/bounce.wav" ); 
+    if( wBounce == NULL ) { 
+        printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() ); 
+        success = false;
+    }
+
+    wExplode = Mix_LoadWAV( "sounds/bbc_explode.wav" ); 
+    if( wExplode == NULL ) { 
+        printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() ); 
+        success = false;
+    }
+
+    return success;
+}
+
+void TutorialApplication::switchSound(){
+
+    soundEnabled = !soundEnabled;
+    std::string enabled = soundEnabled ? "ON" : "OFF";
+    sound->setText("Sound: " + enabled);
+
 }
 
 void TutorialApplication::startFireworks(){
@@ -421,6 +484,9 @@ void TutorialApplication::startFireworks(){
 }
 
 void TutorialApplication::explode(Ogre::Vector3 pos){
+    if (soundEnabled){
+            Mix_PlayChannel(-1, wExplode, 0);
+        }
     if (mSceneMgr->hasSceneNode("BallExplode"))
     {
         Ogre::SceneNode* itemNode = mSceneMgr->getSceneNode("BallExplode");
@@ -465,21 +531,22 @@ bool TutorialApplication::setup()
     loadResources();
 
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
+    light->setCastShadows(true);
     Ogre::SceneNode* lightNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
     lightNode->attachObject(light);
     lightNode->setPosition(0, 10, 0);
-
-
 
     // register our scene with the RTSS
 
     //! [lightingsset]
     mSceneMgr->setAmbientLight(Ogre::ColourValue(1, 1, 1));
+    mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
     //! [lightingsset
 
     createBulletSim();
     createScene();
     setupGUI();
+    setupSDL();
     createFrameListener();
     sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
     ballParticle = mSceneMgr->createParticleSystem("Explode", "OOB");
@@ -538,10 +605,6 @@ void TutorialApplication::reset(void){
     ball->reset();
     ball->randomizeColor();
     paddle1->clearForce();
-
-    //paddle1->reset(); 
-    //paddle2->reset();
-
 }
 
 void TutorialApplication::newGame(void){

@@ -58,6 +58,9 @@ http://www.ogre3d.org/wiki/
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
+#include "SDL/SDL.h"
+#include "SDL/SDL_mixer.h"
+
 #endif
 
 #ifdef OGRE_STATIC_LIB
@@ -99,6 +102,10 @@ public:
     void updateScore(int player);
     void checkColor(int player);
 
+
+    Mix_Chunk *wBounce;
+    bool soundEnabled;
+
 protected:
     bool configure(void);
     void chooseSceneManager(void);
@@ -134,6 +141,8 @@ protected:
     bool quit(const CEGUI::EventArgs& e);
 
     std::string getScoreBoardText(void);
+    bool setupSDL(void);
+    void switchSound(void);
 
 
     // Adjust mouse clipping area
@@ -198,10 +207,15 @@ protected:
     CEGUI::Window *gameSheet;
     CEGUI::Window *pauseSheet;
     CEGUI::Window *scoreBoard;
+    CEGUI::Window *sound;
 
     PlayerWallCallback* pwcb;
     OpponentWallCallback* owcb;
     Paddle1Callback* p1cb;
+
+    Mix_Chunk *wExplode;
+
+
 
 #ifdef OGRE_STATIC_LIB
     Ogre::StaticPluginLoader m_StaticPluginLoader;

@@ -15,7 +15,7 @@ public:
 
     	ent = scnMgr->createEntity("wall");
     	ent->setMaterialName("Examples/Rockwall");
-    	ent->setCastShadows(false);
+    	ent->setCastShadows(true);
 
     	node = scnMgr->getRootSceneNode()->createChildSceneNode();
     	node->attachObject(ent);
@@ -23,6 +23,7 @@ public:
     	node->yaw(Ogre::Degree(yaw));
     	node->pitch(Ogre::Degree(pitch));
     	node->roll(Ogre::Degree(roll));
+
 
       if (pitch==90){
         //ent->setMaterialName("wall/Clear");
