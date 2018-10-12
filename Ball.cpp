@@ -46,7 +46,16 @@ public:
 
 	void push(){
 		body->activate(true);
-		body->applyCentralImpulse( btVector3(1, 1, 2));
+
+		bool neg = rand() % 2;
+
+		int x = rand() % 3;
+		int y = rand() % 3;
+		int z = 3; //so the z force is enough to start the game
+		
+		if (neg) { z = -z; } //chance to start towards opponent
+
+		body->applyCentralImpulse( btVector3(x, y, z));
 	}
 
 	void randomizeColor(){

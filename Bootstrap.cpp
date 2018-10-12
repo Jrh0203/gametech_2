@@ -83,12 +83,35 @@ struct Paddle1Callback : public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
+        if (context->soundEnabled){
+            Mix_PlayChannel(-1, context->wPaddleHit, 0);
+        }
         context->checkColor(1);
     }
 
     TutorialApplication* context;
 };
 
+struct Paddle2Callback : public btCollisionWorld::ContactResultCallback
+{
+    Paddle2Callback(TutorialApplication* ptr) : context(ptr) {}
+
+    btScalar addSingleResult(btManifoldPoint& cp,
+        const btCollisionObjectWrapper* colObj0Wrap,
+        int partId0,
+        int index0,
+        const btCollisionObjectWrapper* colObj1Wrap,
+        int partId1,
+        int index1)
+    {
+        if (context->soundEnabled){
+            Mix_PlayChannel(-1, context->wPaddleHit, 0);
+        }
+        context->checkColor(0);
+    }
+
+    TutorialApplication* context;
+};
 
 
 TutorialApplication::TutorialApplication()
@@ -111,6 +134,7 @@ TutorialApplication::TutorialApplication()
   opponentScore = 0;
   gameRunning = true;
   soundEnabled=true;
+  fireworksOn=false;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
     m_ResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
@@ -215,6 +239,7 @@ void TutorialApplication::createScene()
         pwcb = new PlayerWallCallback(this);
         owcb = new OpponentWallCallback(this);
         p1cb = new Paddle1Callback(this);
+        p2cb = new Paddle2Callback(this);
   }
 
 
@@ -340,6 +365,7 @@ void TutorialApplication::setupGUI(){
         gameSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
         menuSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
         pauseSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+        restartSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
 
 
         //quit button-gois in ingame GUI and menu GUI
@@ -370,13 +396,6 @@ void TutorialApplication::setupGUI(){
 
         pauseQuit->subscribeEvent(CEGUI::PushButton::EventClicked, 
         CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
-
-        // CEGUI::Window *gameQuit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-        // gameQuit->setText("Quit");
-        // gameQuit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
-        // gameQuit->addChild(gameQuit);
-        // gameQuit->subscribeEvent(CEGUI::PushButton::EventClicked, 
-        // CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
 
 
         scoreBoard = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
@@ -421,6 +440,28 @@ void TutorialApplication::setupGUI(){
         CEGUI::SubscriberSlot(&TutorialApplication::switchSound, this));
         pauseSheet->addChild(sound);
 
+        CEGUI::Window *restartQuit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        restartQuit->setText("Quit");
+        restartQuit->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0,0)));
+        restartQuit->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        restartSheet->addChild(restartQuit);
+        restartQuit->subscribeEvent(CEGUI::PushButton::EventClicked, 
+            CEGUI::SubscriberSlot(&TutorialApplication::quit, this));
+
+        victoryText = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        victoryText->setPosition(CEGUI::UVector2(CEGUI::UDim(0.35, 0), CEGUI::UDim(0.30,0)));
+        victoryText->setSize(CEGUI::USize(CEGUI::UDim(0.3, 0), CEGUI::UDim(0.1,0)));
+        restartSheet->addChild(victoryText);
+
+        CEGUI::Window *playAgain = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        playAgain->setText("Play Again?");
+        playAgain->setPosition(CEGUI::UVector2(CEGUI::UDim(0.4,0),CEGUI::UDim(0.45,0)));
+        playAgain->setSize(CEGUI::USize(CEGUI::UDim(0.2, 0), CEGUI::UDim(0.1, 0)));
+        restartSheet->addChild(playAgain);
+        playAgain->subscribeEvent(CEGUI::PushButton::EventClicked, 
+            CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
+
+
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(menuSheet);
         gameRunning = false;
 }
@@ -451,6 +492,12 @@ bool TutorialApplication::setupSDL(){
 
     wExplode = Mix_LoadWAV( "sounds/bbc_explode.wav" ); 
     if( wExplode == NULL ) { 
+        printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() ); 
+        success = false;
+    }
+
+    wPaddleHit= Mix_LoadWAV( "sounds/woodblock.wav" ); 
+    if( wPaddleHit == NULL ) { 
         printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() ); 
         success = false;
     }
@@ -596,6 +643,7 @@ void TutorialApplication::checkColor(int player){
         updateScore(player);
         }
     }
+
 }
 
 void TutorialApplication::updateScore(int player){
@@ -611,7 +659,13 @@ void TutorialApplication::updateScore(int player){
 
     if (playerScore == 7 || opponentScore == 7){
         //gameover
-        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(menuSheet);
+        startFireworks();
+
+        std::string winner = (playerScore == 7) ? "Player 1" : "Player 2";
+
+        victoryText->setText(winner + " wins!");
+
+        CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(restartSheet);
         gameRunning = false;
     }
 
@@ -621,17 +675,23 @@ void TutorialApplication::reset(void){
     explode(ball->node->getPosition());
     ball->reset();
     ball->randomizeColor();
+    paddle2->opponentChangeColor(ball->getColor());
     paddle1->clearForce();
 }
 
 void TutorialApplication::newGame(void){
     //reset();
+    if (fireworksOn){
+        startFireworks(); //turn the fireworks off if they are running
+        reset();
+    }
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(gameSheet);
     gameRunning = true;
     playerScore = 0;
     opponentScore = 0;
 
     scoreBoard->setText(getScoreBoardText());
+    paddle2->opponentChangeColor(ball->getColor());
     ball->push();
 }
 
@@ -662,10 +722,10 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
 
     switch(arg.key){
       case OIS::KC_ESCAPE: if (gameRunning) pauseGame(); else mShutDown = true; break;
-      case OIS::KC_W:  keys[0]=true; break;
-      case OIS::KC_A:  keys[1]=true; break;
+      case OIS::KC_W:  paddle1->changeColor(0); keys[0]=true; break;
+      case OIS::KC_A:  paddle1->changeColor(1); keys[1]=true; break;
       case OIS::KC_S:  keys[2]=true; break;
-      case OIS::KC_D:  keys[3]=true; break;
+      case OIS::KC_D:  paddle1->changeColor(2); keys[3]=true; break;
       case OIS::KC_E:  keys[4]=true; break;
       case OIS::KC_Q:  keys[5]=true; break;
       case OIS::KC_LEFT: keys[6]=true; break;
@@ -762,6 +822,13 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         paddle2->updatePosition(ball->getNode()->getPosition());
     }
 
+    //ball switches colors when it crosses center of gamefield
+    if ((int)ball->getNode()->getPosition().z == 0){
+        ball->randomizeColor();
+        paddle2->opponentChangeColor(ball->getColor());
+
+    }
+
     paddle1->playerUpdatePosition(mMouse->getMouseState().X.rel, -mMouse->getMouseState().Y.rel);
 
 
@@ -801,6 +868,7 @@ void TutorialApplication::checkCollisions(){
     dynamicsWorld->contactPairTest(walls[4]->getRigidBody(), ball->getRigidBody(), *owcb);
     dynamicsWorld->contactPairTest(walls[5]->getRigidBody(), ball->getRigidBody(), *pwcb);
     dynamicsWorld->contactPairTest(paddle1->getRigidBody(), ball->getRigidBody(), *p1cb);
+    dynamicsWorld->contactPairTest(paddle2->getRigidBody(), ball->getRigidBody(), *p2cb);
 }
 
 bool TutorialApplication::mouseMoved(const OIS::MouseEvent &arg)

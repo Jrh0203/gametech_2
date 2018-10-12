@@ -89,6 +89,7 @@ http://www.ogre3d.org/wiki/
 struct OpponentWallCallback;
 struct PlayerWallCallback;
 struct Paddle1Callback;
+struct Paddle2Callback;
 
 class TutorialApplication : 
     public Ogre::FrameListener, public Ogre::WindowEventListener, 
@@ -104,6 +105,7 @@ public:
 
 
     Mix_Chunk *wBounce;
+    Mix_Chunk *wPaddleHit;
     bool soundEnabled;
 
 protected:
@@ -206,12 +208,15 @@ protected:
     CEGUI::Window *menuSheet;
     CEGUI::Window *gameSheet;
     CEGUI::Window *pauseSheet;
+    CEGUI::Window *restartSheet;
     CEGUI::Window *scoreBoard;
     CEGUI::Window *sound;
+    CEGUI::Window *victoryText;
 
     PlayerWallCallback* pwcb;
     OpponentWallCallback* owcb;
     Paddle1Callback* p1cb;
+    Paddle2Callback* p2cb;
 
     Mix_Chunk *wExplode;
     Mix_Music *wBGM;

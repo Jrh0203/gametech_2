@@ -1,0 +1,26 @@
+Rules:
+Hit a ball back and forth against a computer-controlled opponent. If the ball
+passes your opponent, you get a point. Hitting the ball with the wrong color 
+paddle gives your opponent a point. The ball color is randomized whenever the 
+ball passes the center of the game field. First to 7 points wins!
+
+Controls:
+
+--In game--
+Paddle position controlled by mouse movement
+
+Change color of paddle
+W-Blue
+A-Red 
+D-Green
+
+Space-start round after reset
+Esc-Pause 
+
+K-Cycle through colors of your paddle
+R-Reset
+F-Fireworks
+
+--Start/Pause menu--
+WASD-move camera
+Esc-close game

@@ -45,14 +45,15 @@ public:
 	    body = new btRigidBody(rbInfo);
 	    body->setRestitution(1.0);
 	    body->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
-
+		srand(time(NULL));
 	    color = 0;
 	}
  
 	~Paddle(){}
 
-	void changeColor(){
-		color = (color+1)%3;
+	void changeColor(int newColor = 0){
+		color = newColor;
+
 		//0 Blue, 1 Red, 2 Green for now
 		if(color == 0)
 			ent->setMaterialName("paddle/Blue");
@@ -62,6 +63,19 @@ public:
 			ent->setMaterialName("paddle/Green");
 	}
 
+	void opponentChangeColor(int ballColor){
+		int val = rand() % 100;
+
+		int newColor;
+		//opponent pcks correct color 90% of the time
+		if (val < 90){
+			newColor = ballColor;
+		} else {
+			newColor=(ballColor+1)%3;
+		}
+
+		changeColor(newColor);
+	}
 
 	void moveLeft(){
 
@@ -92,23 +106,23 @@ public:
 		body->translate(lvelocity);
 	}
 
-	void updatePosition(Ogre::Vector3 ballPos){
+	void updatePosition(Ogre::Vector3 ballPos, int speed = 20){
 
 		body->activate(true);	
 		Ogre::Vector3 myPos = node->getPosition();
-		btVector3 updatedLinearVelocity(0, 0, 0);
+		int x=0, y=0;
 		double minDistance = 3;
 		if ((ballPos.x - myPos.x) < -minDistance){
-			updatedLinearVelocity += btVector3(-15, 0, 0);
+			x-=speed;
 		} else if ((ballPos.x - myPos.x) > minDistance){
-			updatedLinearVelocity += btVector3(15, 0, 0);
+			x+=speed;
 		}
 		if ((ballPos.y - myPos.y) < -minDistance){
-			updatedLinearVelocity += btVector3(0, -15, 0);
+			y-=speed;
 		} else if ((ballPos.y - myPos.y) > minDistance){
-			updatedLinearVelocity += btVector3(0, 15, 0);
+			y+=speed;
 		}
-		body->setLinearVelocity(updatedLinearVelocity);
+		body->setLinearVelocity(btVector3(x, y, 0));
 	}
 
 	Ogre::ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName) {
