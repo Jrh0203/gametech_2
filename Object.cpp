@@ -11,6 +11,7 @@ protected:
 	MyMotionState* motionState;
 	btVector3 startPos;
 	int color;
+	
 
 public: 
 	Ogre::SceneNode* node; 
@@ -27,6 +28,8 @@ public:
 	bool isDynamic() { return (mass != 0.f); }
 
 	MyMotionState* getMotionState(){return motionState;}
+
+	int speed;
 
 	void reset(){
 		clearForce();

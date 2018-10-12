@@ -43,6 +43,7 @@ struct OpponentWallCallback :public btCollisionWorld::ContactResultCallback
     {
         if (context->soundEnabled){
             Mix_PlayChannel(-1, context->wBounce, 0);
+            context->ballTrigger = 3;
         }
         context->updateScore(0);
     }
@@ -64,6 +65,7 @@ struct PlayerWallCallback : public btCollisionWorld::ContactResultCallback
     {
         if (context->soundEnabled){
             Mix_PlayChannel(-1, context->wBounce, 0);
+            context->ballTrigger = 3;
         }
         context->updateScore(1);
     }
@@ -85,6 +87,7 @@ struct Paddle1Callback : public btCollisionWorld::ContactResultCallback
     {
         if (context->soundEnabled){
             Mix_PlayChannel(-1, context->wPaddleHit, 0);
+            context->ballTrigger = 3;
         }
         context->checkColor(1);
     }
@@ -106,6 +109,7 @@ struct Paddle2Callback : public btCollisionWorld::ContactResultCallback
     {
         if (context->soundEnabled){
             Mix_PlayChannel(-1, context->wPaddleHit, 0);
+            context->ballTrigger = 3;
         }
         context->checkColor(0);
     }
@@ -535,7 +539,7 @@ void TutorialApplication::startFireworks(){
         sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
         Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("Fireworks");
         particleNode->attachObject(sunParticle);
-        particleNode->setPosition(0,-40,-300);
+        particleNode->setPosition(0,-40,0);
         fireworksOn = true;
     } else {
         Ogre::SceneNode* itemNode = mSceneMgr->getSceneNode("Fireworks");
@@ -677,6 +681,7 @@ void TutorialApplication::reset(void){
     ball->randomizeColor();
     paddle2->opponentChangeColor(ball->getColor());
     paddle1->clearForce();
+    paddle2->speed=20;
 }
 
 void TutorialApplication::newGame(void){
@@ -731,7 +736,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_LEFT: keys[6]=true; break;
       case OIS::KC_RIGHT: keys[7]=true; break;
       case OIS::KC_R: reset(); break;
-      case OIS::KC_SPACE: ball->push(); break;
+      case OIS::KC_SPACE: ball->push(); paddle2->opponentChangeColor(ball->getColor()); break;
       case OIS::KC_K: paddle1->changeColor(); break;
       case OIS::KC_F: startFireworks(); break;
       case OIS::KC_T: explode(Ogre::Vector3()); break;
@@ -824,7 +829,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
     //ball switches colors when it crosses center of gamefield
     if ((int)ball->getNode()->getPosition().z == 0){
-        ball->randomizeColor();
+        //ball->randomizeColor();
         paddle2->opponentChangeColor(ball->getColor());
 
     }
@@ -837,6 +842,15 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
     
     checkCollisions();
+
+    if (ballTrigger>0){
+        ballTrigger-=1;
+    } else if (ballTrigger==0) {
+        ball->randomizeColor();
+        ballTrigger-=1;
+        ball->speedUp(1.12);
+        paddle2->speedUp(1.12);
+    }
     
     } 
     else {

@@ -108,6 +108,13 @@ public:
     Mix_Chunk *wPaddleHit;
     bool soundEnabled;
 
+    Paddle *paddle1;
+    Paddle *paddle2;
+    Wall **walls;
+    Ball *ball;
+
+    int ballTrigger = -1;
+
 protected:
     bool configure(void);
     void chooseSceneManager(void);
@@ -190,10 +197,7 @@ protected:
     btAlignedObjectArray<btCollisionShape*> collisionShapes;
 
     //game objects
-    Paddle *paddle1;
-    Paddle *paddle2;
-    Wall **walls;
-    Ball *ball;
+    
 
     //score
     int rounds;

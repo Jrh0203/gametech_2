@@ -47,6 +47,7 @@ public:
 	    body->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 		srand(time(NULL));
 	    color = 0;
+	    speed = 20;
 	}
  
 	~Paddle(){}
@@ -106,7 +107,7 @@ public:
 		body->translate(lvelocity);
 	}
 
-	void updatePosition(Ogre::Vector3 ballPos, int speed = 20){
+	void updatePosition(Ogre::Vector3 ballPos){
 
 		body->activate(true);	
 		Ogre::Vector3 myPos = node->getPosition();
@@ -123,6 +124,10 @@ public:
 			y+=speed;
 		}
 		body->setLinearVelocity(btVector3(x, y, 0));
+	}
+
+	void speedUp(float mult){
+		speed*=mult;
 	}
 
 	Ogre::ManualObject* createCubeMesh(Ogre::String name, Ogre::String matName) {

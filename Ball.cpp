@@ -58,8 +58,14 @@ public:
 		body->applyCentralImpulse( btVector3(x, y, z));
 	}
 
+	void speedUp(float mult){
+		btVector3 zeroVector(0, 0, 0);
+		body->setLinearVelocity(body->getLinearVelocity()*mult);
+	}
+
 	void randomizeColor(){
-		color = (rand() % 3);
+		color += (rand() % 2)+1;
+		color%=3;
 		//0 Blue, 1 Red, 2 Green for now
 		if(color == 0)
 			ent->setMaterialName("paddle/Blue");
