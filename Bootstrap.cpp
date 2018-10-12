@@ -428,6 +428,8 @@ void TutorialApplication::setupGUI(){
 bool TutorialApplication::setupSDL(){
     bool success = true;
 
+    //code below modified from Lazy Foo productions http://lazyfoo.net/tutorials/SDL/21_sound_effects_and_music/index.php
+
     //Initialize SDL 
     if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) < 0 ) { 
         printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() ); 
@@ -453,6 +455,16 @@ bool TutorialApplication::setupSDL(){
         success = false;
     }
 
+    //Phillip Gross-eRHoLuNG,found on freemusicarchive.org so should be ok?
+    wBGM = Mix_LoadMUS( "sounds/Phillip_Gross_-_03_-_eRHoLuNG.wav" ); 
+    if( wBGM == NULL ) { 
+        printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() ); 
+        success = false; 
+    } 
+
+    //start music
+    Mix_PlayMusic( wBGM, -1 );
+
     return success;
 }
 
@@ -462,6 +474,11 @@ void TutorialApplication::switchSound(){
     std::string enabled = soundEnabled ? "ON" : "OFF";
     sound->setText("Sound: " + enabled);
 
+    if (soundEnabled){
+        Mix_ResumeMusic();
+    } else {
+         Mix_PauseMusic();
+    }
 }
 
 void TutorialApplication::startFireworks(){

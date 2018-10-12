@@ -214,6 +214,7 @@ protected:
     Paddle1Callback* p1cb;
 
     Mix_Chunk *wExplode;
+    Mix_Music *wBGM;
 
 
 
