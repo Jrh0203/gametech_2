@@ -31,8 +31,11 @@ THE SOFTWARE
 #include <exception>
 #include "Bootstrap.h"
 
-struct OpponentWallCallback :public btCollisionWorld::ContactResultCallback
-{ OpponentWallCallback(TutorialApplication* ptr) : context(ptr) {}
+struct ScoreCallback : public btCollisionWorld::ContactResultCallback
+{ 
+    ScoreCallback(TutorialApplication* ptr, int i) : context(ptr) {
+    player = i;
+}
     btScalar addSingleResult(btManifoldPoint& cp,
         const btCollisionObjectWrapper* colObj0Wrap,
         int partId0,
@@ -41,41 +44,22 @@ struct OpponentWallCallback :public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
-        if (context->soundEnabled){
-            Mix_PlayChannel(-1, context->wBounce, 0);
-            context->ballTrigger = 3;
-        }
-        context->updateScore(0);
+        // if (context->soundEnabled){
+        //     Mix_PlayChannel(-1, context->wBounce, 0);
+        //    // context->ballTrigger = 3;
+        // }
+        context->updateScore(player);
     }
 
     TutorialApplication* context;
+    int player;
 };
 
-struct PlayerWallCallback : public btCollisionWorld::ContactResultCallback
+struct PaddleCallback : public btCollisionWorld::ContactResultCallback
 {
-    PlayerWallCallback(TutorialApplication* ptr) : context(ptr) {}
-
-    btScalar addSingleResult(btManifoldPoint& cp,
-        const btCollisionObjectWrapper* colObj0Wrap,
-        int partId0,
-        int index0,
-        const btCollisionObjectWrapper* colObj1Wrap,
-        int partId1,
-        int index1)
-    {
-        if (context->soundEnabled){
-            Mix_PlayChannel(-1, context->wBounce, 0);
-            context->ballTrigger = 3;
-        }
-        context->updateScore(1);
+    PaddleCallback(TutorialApplication* ptr, int i) : context(ptr) {
+        paddle = i;
     }
-
-    TutorialApplication* context;
-};
-
-struct Paddle1Callback : public btCollisionWorld::ContactResultCallback
-{
-    Paddle1Callback(TutorialApplication* ptr) : context(ptr) {}
 
     btScalar addSingleResult(btManifoldPoint& cp,
         const btCollisionObjectWrapper* colObj0Wrap,
@@ -87,17 +71,18 @@ struct Paddle1Callback : public btCollisionWorld::ContactResultCallback
     {
         if (context->soundEnabled){
             Mix_PlayChannel(-1, context->wPaddleHit, 0);
-            context->ballTrigger = 3;
         }
-        context->checkColor(1);
+        context->ballTrigger = context->delay;
+        context->checkColor(paddle);
     }
 
     TutorialApplication* context;
+    int paddle;
 };
 
-struct Paddle2Callback : public btCollisionWorld::ContactResultCallback
+struct SideWallCallback : public btCollisionWorld::ContactResultCallback
 {
-    Paddle2Callback(TutorialApplication* ptr) : context(ptr) {}
+    SideWallCallback(TutorialApplication* ptr) : context(ptr) {}
 
     btScalar addSingleResult(btManifoldPoint& cp,
         const btCollisionObjectWrapper* colObj0Wrap,
@@ -107,11 +92,9 @@ struct Paddle2Callback : public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
-        if (context->soundEnabled){
-            Mix_PlayChannel(-1, context->wPaddleHit, 0);
-            context->ballTrigger = 3;
+        if(context->soundEnabled){
+            Mix_PlayChannel(-1, context->wBounce, 0);
         }
-        context->checkColor(0);
     }
 
     TutorialApplication* context;
@@ -139,6 +122,8 @@ TutorialApplication::TutorialApplication()
   gameRunning = true;
   soundEnabled=true;
   fireworksOn=false;
+
+  delay = 7;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
     m_ResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
@@ -240,10 +225,11 @@ void TutorialApplication::createScene()
         collisionShapes.push_back(walls[5]->getCollisionShape());
         dynamicsWorld->addRigidBody(walls[5]->getRigidBody());
 
-        pwcb = new PlayerWallCallback(this);
-        owcb = new OpponentWallCallback(this);
-        p1cb = new Paddle1Callback(this);
-        p2cb = new Paddle2Callback(this);
+        pwcb = new ScoreCallback(this, 1);
+        owcb = new ScoreCallback(this, 0);
+        p1cb = new PaddleCallback(this, 1);
+        p2cb = new PaddleCallback(this, 0);
+        swcb = new SideWallCallback(this);
   }
 
 
@@ -494,7 +480,9 @@ bool TutorialApplication::setupSDL(){
         success = false;
     }
 
-    wExplode = Mix_LoadWAV( "sounds/bbc_explode.wav" ); 
+    Mix_VolumeChunk(wBounce, 25);
+
+    wExplode = Mix_LoadWAV( "sounds/explosion.wav" ); 
     if( wExplode == NULL ) { 
         printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() ); 
         success = false;
@@ -509,6 +497,12 @@ bool TutorialApplication::setupSDL(){
     //Phillip Gross-eRHoLuNG,found on freemusicarchive.org so should be ok?
     wBGM = Mix_LoadMUS( "sounds/Phillip_Gross_-_03_-_eRHoLuNG.wav" ); 
     if( wBGM == NULL ) { 
+        printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() ); 
+        success = false; 
+    } 
+
+    wVictory = Mix_LoadWAV( "sounds/victory.wav" ); 
+    if( wVictory == NULL ) { 
         printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() ); 
         success = false; 
     } 
@@ -535,6 +529,9 @@ void TutorialApplication::switchSound(){
 void TutorialApplication::startFireworks(){
     if (fireworksOn==false){
         //sunParticle->clear();
+        if (soundEnabled){
+            Mix_PlayChannel(-1, wVictory, 0);
+        }
         mSceneMgr->destroyParticleSystem("Sun");
         sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
         Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("Fireworks");
@@ -552,14 +549,14 @@ void TutorialApplication::startFireworks(){
 }
 
 void TutorialApplication::explode(Ogre::Vector3 pos){
-    if (soundEnabled){
-            Mix_PlayChannel(-1, wExplode, 0);
-        }
     if (mSceneMgr->hasSceneNode("BallExplode"))
     {
         Ogre::SceneNode* itemNode = mSceneMgr->getSceneNode("BallExplode");
         itemNode->removeAndDestroyAllChildren();
         mSceneMgr->destroySceneNode(itemNode);    
+        if (soundEnabled){
+            Mix_PlayChannel(-1, wExplode, 0);
+        }
     }
     
     
@@ -628,21 +625,13 @@ void TutorialApplication::destroyScene(void)
 }
 
 void TutorialApplication::checkColor(int player){
-    //reset();
-
-    //std::cout << "Paddle collision" << std::endl;
 
     if (player){
-        //std::cout << "Ball: " << ball->getColor() << std::endl;
-        //std::cout << "Paddle1: " << paddle1->getColor() << std::endl;
         if (paddle1->getColor() != ball->getColor()){
-            //std::cout << "updating score, paddle 1 was not correct color" << std::endl;
             updateScore(player);
         }
      
     } else {
-                // std::cout << "Ball: " << ball->getColor() << std::endl;
-           //std::cout << "Paddle2: " << paddle2->getColor() << std::endl;
         if (paddle2->getColor() != ball->getColor()){
         updateScore(player);
         }
@@ -669,6 +658,7 @@ void TutorialApplication::updateScore(int player){
 
         victoryText->setText(winner + " wins!");
 
+        CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(restartSheet);
         gameRunning = false;
     }
@@ -690,6 +680,8 @@ void TutorialApplication::newGame(void){
         startFireworks(); //turn the fireworks off if they are running
         reset();
     }
+
+    CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide();
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(gameSheet);
     gameRunning = true;
     playerScore = 0;
@@ -702,11 +694,13 @@ void TutorialApplication::newGame(void){
 
 void TutorialApplication::pauseGame(){
     gameRunning=false;
+    CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(pauseSheet);
 }
 
 void TutorialApplication::resumeGame(){
     gameRunning=true;
+    CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide();
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(gameSheet); 
 }
 
@@ -792,30 +786,6 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);
     }
 
-
-    //b->Ball::move(evt);
-    // if (mCamera && ball){
-    //   mCamera->lookAt(ball->getNode()->getPosition());
-    // }
-
-    // if (keys[0]){
-    //     mCamNode->translate(0,0,-0.1);
-    // }
-    // if (keys[1]){
-    //     mCamNode->translate(-0.1,0,0);
-    // }
-    // if (keys[2]){
-    //     mCamNode->translate(0,0,0.1);
-    // }
-    // if (keys[3]){
-    //     mCamNode->translate(0.1,0,0);
-    // }
-    // if (keys[4]){
-    //     mCamNode->translate(0,0.1,0);
-    // }
-    // if (keys[5]){
-    //     mCamNode->translate(0,-0.1,0);
-    // }
     if (keys[6]){
        paddle1->moveLeft();
     }
@@ -883,6 +853,12 @@ void TutorialApplication::checkCollisions(){
     dynamicsWorld->contactPairTest(walls[5]->getRigidBody(), ball->getRigidBody(), *pwcb);
     dynamicsWorld->contactPairTest(paddle1->getRigidBody(), ball->getRigidBody(), *p1cb);
     dynamicsWorld->contactPairTest(paddle2->getRigidBody(), ball->getRigidBody(), *p2cb);
+
+    for (int i = 0; i < 4; i++){
+      dynamicsWorld->contactPairTest(walls[i]->getRigidBody(), ball->getRigidBody(), *swcb);
+    }
+
+    //add all wall noise collisions
 }
 
 bool TutorialApplication::mouseMoved(const OIS::MouseEvent &arg)

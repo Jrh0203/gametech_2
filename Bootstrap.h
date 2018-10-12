@@ -86,10 +86,13 @@ http://www.ogre3d.org/wiki/
 
 //---------------------------------------------------------------------------
 
-struct OpponentWallCallback;
-struct PlayerWallCallback;
-struct Paddle1Callback;
-struct Paddle2Callback;
+struct ScoreCallback;
+//struct OpponentWallCallback;
+//struct PlayerWallCallback;
+struct PaddleCallback;
+//struct Paddle1Callback;
+//struct Paddle2Callback;
+struct SideWallCallback;
 
 class TutorialApplication : 
     public Ogre::FrameListener, public Ogre::WindowEventListener, 
@@ -114,6 +117,7 @@ public:
     Ball *ball;
 
     int ballTrigger = -1;
+    int delay;
 
 protected:
     bool configure(void);
@@ -217,13 +221,19 @@ protected:
     CEGUI::Window *sound;
     CEGUI::Window *victoryText;
 
-    PlayerWallCallback* pwcb;
-    OpponentWallCallback* owcb;
-    Paddle1Callback* p1cb;
-    Paddle2Callback* p2cb;
+    //PlayerWallCallback* pwcb;
+    //OpponentWallCallback* owcb;
+    ScoreCallback* pwcb;
+    ScoreCallback* owcb;
+    //Paddle1Callback* p1cb;
+    //Paddle2Callback* p2cb;
+    PaddleCallback* p1cb;
+    PaddleCallback* p2cb;
+    SideWallCallback* swcb;
 
     Mix_Chunk *wExplode;
     Mix_Music *wBGM;
+    Mix_Chunk *wVictory;
 
 
 
