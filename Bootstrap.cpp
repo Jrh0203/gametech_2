@@ -647,7 +647,7 @@ bool TutorialApplication::setup()
     createFrameListener();
     sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
     ballParticle = mSceneMgr->createParticleSystem("Explode", "OOB");
-    clangParticle = mSceneMgr->createParticleSystem("Clang", "Clang");
+    //clangParticle = mSceneMgr->createParticleSystem("Clang", "Clang");
     
     //! [planesetmat] */
     return true;
@@ -813,16 +813,6 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     mMouse->capture();
 
     if (gameRunning){
-    
-    if(mCamera && ball){
-        Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
-        Ogre::Vector3 curPos = mCamNode->getPosition();
-        Ogre::Vector3 desiredPos = Ogre::Vector3(paddlePosition.x, 30, paddlePosition.z*2);
-        double diviser = 1; // make diviser > 1 for smooth camera, probably a number in the low hundereds maybe
-        Ogre::Vector3 cameraPosition = Ogre::Vector3(curPos.x+(desiredPos.x-curPos.x)/diviser, paddlePosition.y, curPos.z+(desiredPos.z-curPos.z)/diviser);
-        mCamNode->setPosition(cameraPosition);
-        mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);
-    }
 
     if (keys[6]){
        paddle1->moveLeft();
@@ -842,7 +832,11 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
     }
 
-    paddle1->playerUpdatePosition(mMouse->getMouseState().X.rel, -mMouse->getMouseState().Y.rel);
+    double minY = walls[0]->wallPosition().getY();
+    double maxY = walls[3]->wallPosition().getY();
+    double minX = walls[2]->wallPosition().getX();
+    double maxX = walls[1]->wallPosition().getX();
+
 
 
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
@@ -850,6 +844,22 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
     
     checkCollisions();
+
+    paddle1->playerUpdatePosition(mMouse->getMouseState().X.rel, -mMouse->getMouseState().Y.rel, minX, maxX, minY, maxY);
+
+    btTransform transform;
+    transform = paddle1->body->getWorldTransform();
+    if(mCamera && ball){
+        //Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
+        Ogre::Vector3 paddlePosition = Ogre::Vector3(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
+        //Ogre::Vector3 curPos = mCamNode->getPosition();
+        //Ogre::Vector3 desiredPos = Ogre::Vector3(paddlePosition.x, 30, paddlePosition.z*2);
+        //double diviser = 1; // make diviser > 1 for smooth camera, probably a number in the low hundereds maybe
+        //Ogre::Vector3 cameraPosition = Ogre::Vector3(curPos.x+(desiredPos.x-curPos.x)/diviser, paddlePosition.y, curPos.z+(desiredPos.z-curPos.z)/diviser);
+        Ogre::Vector3 cameraPosition = Ogre::Vector3(paddlePosition.x, paddlePosition.y+5, paddlePosition.z+40);
+        mCamNode->setPosition(cameraPosition);
+        mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);
+    }
 
     if (ballTrigger>0){
         ballTrigger-=1;

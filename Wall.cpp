@@ -1,9 +1,11 @@
 class Wall : public Object { 
+private:
+  btVector3 myPos;
 
 protected:
 
 public: 
-	Wall(Ogre::SceneManager* scnMgr, btVector3 vector, int yaw, int pitch, int roll) : Object(scnMgr){
+  Wall(Ogre::SceneManager* scnMgr, btVector3 vector, int yaw, int pitch, int roll) : Object(scnMgr), myPos(vector){
 
     	Ogre::Plane plane(Ogre::Vector3::UNIT_Y, -50);
 
@@ -68,6 +70,11 @@ public:
         body->setRestitution(1.0);
         body->setFriction(0.0);
 	}
+
+
+  btVector3 wallPosition(){
+    return myPos;
+  }
 
 	~Wall(){}; 
 };

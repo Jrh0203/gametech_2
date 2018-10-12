@@ -100,11 +100,30 @@ public:
 		body->setLinearVelocity(lvelocity);
 	}
 
-	void playerUpdatePosition(double xUpdate, double yUpdate)
+	void playerUpdatePosition(double xUpdate, double yUpdate, double minX, double maxX, double minY, double maxY)
 	{
 		body->activate(true);
 		btVector3 lvelocity(xUpdate*0.1, yUpdate*0.1, 0);
 		body->translate(lvelocity);
+
+		Ogre::Vector3 curPos = node->getPosition();
+		btTransform transform;
+		transform = body->getWorldTransform();
+		if(transform.getOrigin().getX() < minX){
+			transform.setOrigin(btVector3(minX, transform.getOrigin().getY(), transform.getOrigin().getZ()));
+		}else if(transform.getOrigin().getX() > maxX){
+			transform.setOrigin(btVector3(maxX, transform.getOrigin().getY(), transform.getOrigin().getZ()));
+		}
+		if(transform.getOrigin().getY() < minY){
+			transform.setOrigin(btVector3(transform.getOrigin().getX(), minY, transform.getOrigin().getZ()));
+
+		}else if(transform.getOrigin().getY() > maxY){
+			transform.setOrigin(btVector3(transform.getOrigin().getX(), maxY, transform.getOrigin().getZ()));
+
+		}
+
+		body->setWorldTransform(transform);
+		body->getMotionState()->setWorldTransform(transform);	
 	}
 
 	void updatePosition(Ogre::Vector3 ballPos){
