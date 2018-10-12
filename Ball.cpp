@@ -12,6 +12,7 @@ public:
 		
 		ent = scnMgr->createEntity("sphere.mesh");
 		ent->setMaterialName("ball/Green");
+		ent->setCastShadows(true);
 
 		node = scnMgr->getRootSceneNode()->createChildSceneNode();
 		node->attachObject(ent);

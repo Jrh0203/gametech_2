@@ -599,12 +599,12 @@ bool TutorialApplication::setup()
     light->setCastShadows(true);
     Ogre::SceneNode* lightNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
     lightNode->attachObject(light);
-    lightNode->setPosition(0, 10, 0);
+    lightNode->setPosition(0, 20, 75);
 
     // register our scene with the RTSS
 
     //! [lightingsset]
-    mSceneMgr->setAmbientLight(Ogre::ColourValue(1, 1, 1));
+    mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
     //! [lightingsset
 
@@ -721,10 +721,10 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
 
     switch(arg.key){
       case OIS::KC_ESCAPE: if (gameRunning) pauseGame(); else mShutDown = true; break;
-      case OIS::KC_W:  paddle1->changeColor(0); keys[0]=true; break;
-      case OIS::KC_A:  paddle1->changeColor(1); keys[1]=true; break;
+      case OIS::KC_W:  if (gameRunning) paddle1->changeColor(0); keys[0]=true; break;
+      case OIS::KC_A:  if (gameRunning) paddle1->changeColor(1); keys[1]=true; break;
       case OIS::KC_S:  keys[2]=true; break;
-      case OIS::KC_D:  paddle1->changeColor(2); keys[3]=true; break;
+      case OIS::KC_D:  if (gameRunning) paddle1->changeColor(2); keys[3]=true; break;
       case OIS::KC_E:  keys[4]=true; break;
       case OIS::KC_Q:  keys[5]=true; break;
       case OIS::KC_LEFT: keys[6]=true; break;
