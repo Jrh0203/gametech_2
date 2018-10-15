@@ -179,7 +179,7 @@ protected:
 
     Ogre::OverlaySystem*        mOverlaySystem;
 
-    bool                        mCursorWasVisible;	// Was cursor visible before dialog appeared?
+    bool                        mCursorWasVisible;  // Was cursor visible before dialog appeared?
     bool                        mShutDown;
 
     //OIS Input devices
