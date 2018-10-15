@@ -110,6 +110,7 @@ public:
     Mix_Chunk *wBounce;
     Mix_Chunk *wPaddleHit;
     bool soundEnabled;
+    bool musicEnabled;
 
     Paddle *paddle1;
     Paddle *paddle2;
@@ -160,6 +161,7 @@ protected:
     std::string getScoreBoardText(void);
     bool setupSDL(void);
     void switchSound(void);
+    void switchMusic(void);
 
 
     // Adjust mouse clipping area
@@ -224,6 +226,7 @@ protected:
     CEGUI::Window *restartSheet;
     CEGUI::Window *scoreBoard;
     CEGUI::Window *sound;
+    CEGUI::Window *bgm;
     CEGUI::Window *victoryText;
 
     //PlayerWallCallback* pwcb;

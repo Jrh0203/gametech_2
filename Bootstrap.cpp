@@ -137,6 +137,7 @@ TutorialApplication::TutorialApplication()
   opponentScore = 0;
   gameRunning = true;
   soundEnabled=true;
+  musicEnabled=true;
   fireworksOn=false;
 
   delay = 15;
@@ -447,6 +448,14 @@ void TutorialApplication::setupGUI(){
         CEGUI::SubscriberSlot(&TutorialApplication::switchSound, this));
         pauseSheet->addChild(sound);
 
+        bgm = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        bgm->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0.10,0)));
+        bgm->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
+        bgm->setText("Music: ON");
+        bgm->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::switchMusic, this));
+        pauseSheet->addChild(bgm);
+
         CEGUI::Window *restartQuit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         restartQuit->setText("Quit");
         restartQuit->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0,0)));
@@ -491,13 +500,13 @@ bool TutorialApplication::setupSDL(){
     }
 
     //load sounds
-    wBounce = Mix_LoadWAV( "sounds/bounce.wav" ); 
+    wBounce = Mix_LoadWAV( "sounds/boing.wav" ); 
     if( wBounce == NULL ) { 
         printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() ); 
         success = false;
     }
 
-    Mix_VolumeChunk(wBounce, 25);
+    //Mix_VolumeChunk(wBounce, 128);
 
     wExplode = Mix_LoadWAV( "sounds/explosion.wav" ); 
     if( wExplode == NULL ) { 
@@ -535,8 +544,14 @@ void TutorialApplication::switchSound(){
     soundEnabled = !soundEnabled;
     std::string enabled = soundEnabled ? "ON" : "OFF";
     sound->setText("Sound: " + enabled);
+}
 
-    if (soundEnabled){
+void TutorialApplication::switchMusic(){
+    musicEnabled = !musicEnabled;
+    std::string enabled = musicEnabled ? "ON" : "OFF";
+    bgm->setText("Music: " + enabled);
+
+    if (musicEnabled){
         Mix_ResumeMusic();
     } else {
          Mix_PauseMusic();
