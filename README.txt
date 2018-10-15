@@ -18,6 +18,8 @@ We included a prebuilt executable so that you can just run it out of the box, no
 
 If you want to build our project from source, in the root directory type `./buildit` then `./makeit` and then launch the newly created executable with `./assignment2`.
 
+Make sure to read report.pdf and manual.pdf.
+
 
   ______      _                _____              _ _ _   
  |  ____|    | |              / ____|            | (_) |  
