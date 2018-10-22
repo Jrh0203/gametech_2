@@ -372,6 +372,7 @@ void TutorialApplication::setupGUI(){
         CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
         gameSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
         menuSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+        selectGameSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
         pauseSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
         restartSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
 
@@ -412,7 +413,7 @@ void TutorialApplication::setupGUI(){
         scoreBoard->setText(getScoreBoardText());
         gameSheet->addChild(scoreBoard);
         //CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(sheet);
-        
+
         CEGUI::Window *pause = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         pause->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0.05,0)));
         pause->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
@@ -427,9 +428,31 @@ void TutorialApplication::setupGUI(){
         start->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
         start->setText("Start");
         start->subscribeEvent(CEGUI::PushButton::EventClicked, 
-        CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
+        CEGUI::SubscriberSlot(&TutorialApplication::selectGameType, this));
 
         menuSheet->addChild(start);
+
+        CEGUI::Window *singleplayer = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        singleplayer->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.30,0)));
+        singleplayer->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        singleplayer->setText("Singleplayer");
+        singleplayer->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
+        selectGameSheet->addChild(singleplayer);
+        CEGUI::Window *host= wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        host->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
+        host->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        host->setText("Host Game");
+        host->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::hostGame, this));
+        selectGameSheet->addChild(host);
+        CEGUI::Window *join= wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        join->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.60,0)));
+        join->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        join->setText("Join Game");
+        join->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::joinGame, this));
+        selectGameSheet->addChild(join);
 
         CEGUI::Window *resume = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         resume->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
@@ -606,8 +629,6 @@ void TutorialApplication::clang(Ogre::Vector3 pos){
         mSceneMgr->destroySceneNode(itemNode);    
     }
     
-    
-
     mSceneMgr->destroyParticleSystem("Clang");
     ballParticle = mSceneMgr->createParticleSystem("Clang", "Clang");
     Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("BallClang");
@@ -726,6 +747,11 @@ void TutorialApplication::reset(void){
     paddle2->speed=20;
 }
 
+void TutorialApplication::selectGameType(){
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(selectGameSheet);
+}
+
+
 void TutorialApplication::newGame(void){
     //reset();
     if (fireworksOn){
@@ -742,6 +768,14 @@ void TutorialApplication::newGame(void){
     scoreBoard->setText(getScoreBoardText());
     paddle2->opponentChangeColor(ball->getColor());
     ball->push();
+}
+
+void TutorialApplication::hostGame(void)
+{
+}
+
+void TutorialApplication::joinGame(void)
+{
 }
 
 void TutorialApplication::pauseGame(){

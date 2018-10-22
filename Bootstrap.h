@@ -151,6 +151,11 @@ protected:
     void reset(void);
     bool setup(void);
 
+    //multiplayer
+    void selectGameType(void);
+    void hostGame(void);
+    void joinGame(void);
+
 
     void startFireworks();
 
@@ -221,6 +226,7 @@ protected:
     CEGUI::OgreRenderer* mRenderer;
 
     CEGUI::Window *menuSheet;
+    CEGUI::Window *selectGameSheet;
     CEGUI::Window *gameSheet;
     CEGUI::Window *pauseSheet;
     CEGUI::Window *restartSheet;
