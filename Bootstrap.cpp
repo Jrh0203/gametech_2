@@ -82,7 +82,6 @@ struct PaddleCallback : public btCollisionWorld::ContactResultCallback
 
 struct SideWallCallback : public btCollisionWorld::ContactResultCallback
 {
-
     SideWallCallback(TutorialApplication* ptr) : context(ptr) {}
 
     btScalar addSingleResult(btManifoldPoint& cp,
@@ -93,25 +92,10 @@ struct SideWallCallback : public btCollisionWorld::ContactResultCallback
         int partId1,
         int index1)
     {
-        
-        if (context->collisionTimer==0){
-            if(context->soundEnabled){
-                Mix_PlayChannel(-1, context->wBounce, 0);
-            }
-            /*
-            Ogre::Vector3 pos = context->ball->node->getPosition();
-            btVector3 vel = context->ball->body->getLinearVelocity();
-            Ogre::Vector3 vel2 = Ogre::Vector3(vel[0],vel[1],vel[2]);
-            vel2 = vel2.normalise();
-            Ogre::Vector3 pos2 = pos+vel2*.05;
-            context->clang(pos2);
-            */
-            context->collisionTimer = 500;
+        if(context->soundEnabled){
+            Mix_PlayChannel(-1, context->wBounce, 0);
         }
-        
-
     }
-    
 
     TutorialApplication* context;
 };
@@ -137,11 +121,9 @@ TutorialApplication::TutorialApplication()
   opponentScore = 0;
   gameRunning = true;
   soundEnabled=true;
-  musicEnabled=true;
   fireworksOn=false;
 
-  delay = 15;
-  collisionTimer = 0;
+  delay = 7;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
     m_ResourcePath = Ogre::macBundlePath() + "/Contents/Resources/";
@@ -372,6 +354,7 @@ void TutorialApplication::setupGUI(){
         CEGUI::WindowManager &wmgr = CEGUI::WindowManager::getSingleton();
         gameSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
         menuSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
+        selectGameSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
         pauseSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
         restartSheet = wmgr.createWindow("DefaultWindow", "CEGUIDemo/Sheet");
 
@@ -421,15 +404,38 @@ void TutorialApplication::setupGUI(){
         CEGUI::SubscriberSlot(&TutorialApplication::pauseGame, this));
         gameSheet->addChild(pause);
 
-
+        //start
         CEGUI::Window *start = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         start->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
         start->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
         start->setText("Start");
         start->subscribeEvent(CEGUI::PushButton::EventClicked, 
-        CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
-
+        CEGUI::SubscriberSlot(&TutorialApplication::selectGameType, this));
         menuSheet->addChild(start);
+
+        CEGUI::Window *singleplayer = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        singleplayer->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.30,0)));
+        singleplayer->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        singleplayer->setText("Singleplayer");
+        singleplayer->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
+        selectGameSheet->addChild(singleplayer);
+
+        CEGUI::Window *host= wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        host->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
+        host->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        host->setText("Host Game");
+        host->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::hostGame, this));
+        selectGameSheet->addChild(host);
+
+        CEGUI::Window *join= wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        join->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.60,0)));
+        join->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        join->setText("Join Game");
+        join->subscribeEvent(CEGUI::PushButton::EventClicked, 
+        CEGUI::SubscriberSlot(&TutorialApplication::joinGame, this));
+        selectGameSheet->addChild(join);
 
         CEGUI::Window *resume = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         resume->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
@@ -447,14 +453,6 @@ void TutorialApplication::setupGUI(){
         sound->subscribeEvent(CEGUI::PushButton::EventClicked, 
         CEGUI::SubscriberSlot(&TutorialApplication::switchSound, this));
         pauseSheet->addChild(sound);
-
-        bgm = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-        bgm->setPosition(CEGUI::UVector2(CEGUI::UDim(0,0),CEGUI::UDim(0.10,0)));
-        bgm->setSize(CEGUI::USize(CEGUI::UDim(0.15, 0), CEGUI::UDim(0.05, 0)));
-        bgm->setText("Music: ON");
-        bgm->subscribeEvent(CEGUI::PushButton::EventClicked, 
-        CEGUI::SubscriberSlot(&TutorialApplication::switchMusic, this));
-        pauseSheet->addChild(bgm);
 
         CEGUI::Window *restartQuit = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         restartQuit->setText("Quit");
@@ -500,13 +498,13 @@ bool TutorialApplication::setupSDL(){
     }
 
     //load sounds
-    wBounce = Mix_LoadWAV( "sounds/boing.wav" ); 
+    wBounce = Mix_LoadWAV( "sounds/bounce.wav" ); 
     if( wBounce == NULL ) { 
         printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() ); 
         success = false;
     }
 
-    //Mix_VolumeChunk(wBounce, 128);
+    Mix_VolumeChunk(wBounce, 25);
 
     wExplode = Mix_LoadWAV( "sounds/explosion.wav" ); 
     if( wExplode == NULL ) { 
@@ -544,14 +542,8 @@ void TutorialApplication::switchSound(){
     soundEnabled = !soundEnabled;
     std::string enabled = soundEnabled ? "ON" : "OFF";
     sound->setText("Sound: " + enabled);
-}
 
-void TutorialApplication::switchMusic(){
-    musicEnabled = !musicEnabled;
-    std::string enabled = musicEnabled ? "ON" : "OFF";
-    bgm->setText("Music: " + enabled);
-
-    if (musicEnabled){
+    if (soundEnabled){
         Mix_ResumeMusic();
     } else {
          Mix_PauseMusic();
@@ -594,24 +586,6 @@ void TutorialApplication::explode(Ogre::Vector3 pos){
     ballParticle = mSceneMgr->createParticleSystem("Explode", "OOB");
     Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("BallExplode");
     particleNode->attachObject(ballParticle);
-
-    particleNode->setPosition(pos.x,pos.y, pos.z);
-}
-
-void TutorialApplication::clang(Ogre::Vector3 pos){
-    if (mSceneMgr->hasSceneNode("BallClang"))
-    {
-        Ogre::SceneNode* itemNode = mSceneMgr->getSceneNode("BallClang");
-        itemNode->removeAndDestroyAllChildren();
-        mSceneMgr->destroySceneNode(itemNode);    
-    }
-    
-    
-
-    mSceneMgr->destroyParticleSystem("Clang");
-    ballParticle = mSceneMgr->createParticleSystem("Clang", "Clang");
-    Ogre::SceneNode* particleNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("BallClang");
-    particleNode->attachObject(clangParticle);
 
     particleNode->setPosition(pos.x,pos.y, pos.z);
 }
@@ -662,7 +636,6 @@ bool TutorialApplication::setup()
     createFrameListener();
     sunParticle = mSceneMgr->createParticleSystem("Sun", "Space/Sun");
     ballParticle = mSceneMgr->createParticleSystem("Explode", "OOB");
-    //clangParticle = mSceneMgr->createParticleSystem("Clang", "Clang");
     
     //! [planesetmat] */
     return true;
@@ -726,6 +699,10 @@ void TutorialApplication::reset(void){
     paddle2->speed=20;
 }
 
+void TutorialApplication::selectGameType(){
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(selectGameSheet);
+}
+
 void TutorialApplication::newGame(void){
     //reset();
     if (fireworksOn){
@@ -742,6 +719,14 @@ void TutorialApplication::newGame(void){
     scoreBoard->setText(getScoreBoardText());
     paddle2->opponentChangeColor(ball->getColor());
     ball->push();
+}
+
+void TutorialApplication::hostGame(void)
+{
+}
+
+void TutorialApplication::joinGame(void)
+{
 }
 
 void TutorialApplication::pauseGame(){
@@ -786,7 +771,6 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_K: paddle1->changeColor(); break;
       case OIS::KC_F: startFireworks(); break;
       case OIS::KC_T: explode(Ogre::Vector3()); break;
-      case OIS::KC_G: clang(ball->node->getPosition()); break;
     }
 
   CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
@@ -828,6 +812,16 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     mMouse->capture();
 
     if (gameRunning){
+    
+    if(mCamera && ball){
+        Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
+        Ogre::Vector3 curPos = mCamNode->getPosition();
+        Ogre::Vector3 desiredPos = Ogre::Vector3(paddlePosition.x, 30, paddlePosition.z*2);
+        double diviser = 1; // make diviser > 1 for smooth camera, probably a number in the low hundereds maybe
+        Ogre::Vector3 cameraPosition = Ogre::Vector3(curPos.x+(desiredPos.x-curPos.x)/diviser, paddlePosition.y, curPos.z+(desiredPos.z-curPos.z)/diviser);
+        mCamNode->setPosition(cameraPosition);
+        mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);
+    }
 
     if (keys[6]){
        paddle1->moveLeft();
@@ -847,11 +841,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
     }
 
-    double minY = walls[0]->wallPosition().getY();
-    double maxY = walls[3]->wallPosition().getY();
-    double minX = walls[2]->wallPosition().getX();
-    double maxX = walls[1]->wallPosition().getX();
-
+    paddle1->playerUpdatePosition(mMouse->getMouseState().X.rel, -mMouse->getMouseState().Y.rel);
 
 
     CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
@@ -860,22 +850,6 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     
     checkCollisions();
 
-    paddle1->playerUpdatePosition(mMouse->getMouseState().X.rel, -mMouse->getMouseState().Y.rel, minX, maxX, minY, maxY);
-
-    btTransform transform;
-    transform = paddle1->body->getWorldTransform();
-    if(mCamera && ball){
-        //Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
-        Ogre::Vector3 paddlePosition = Ogre::Vector3(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
-        //Ogre::Vector3 curPos = mCamNode->getPosition();
-        //Ogre::Vector3 desiredPos = Ogre::Vector3(paddlePosition.x, 30, paddlePosition.z*2);
-        //double diviser = 1; // make diviser > 1 for smooth camera, probably a number in the low hundereds maybe
-        //Ogre::Vector3 cameraPosition = Ogre::Vector3(curPos.x+(desiredPos.x-curPos.x)/diviser, paddlePosition.y, curPos.z+(desiredPos.z-curPos.z)/diviser);
-        Ogre::Vector3 cameraPosition = Ogre::Vector3(paddlePosition.x, paddlePosition.y+5, paddlePosition.z+40);
-        mCamNode->setPosition(cameraPosition);
-        mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);
-    }
-
     if (ballTrigger>0){
         ballTrigger-=1;
     } else if (ballTrigger==0) {
@@ -883,10 +857,6 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         ballTrigger-=1;
         ball->speedUp(1.12);
         paddle2->speedUp(1.12);
-    }
-
-    if (collisionTimer>0){
-        collisionTimer-=1;
     }
     
     } 
