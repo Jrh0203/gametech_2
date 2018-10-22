@@ -110,6 +110,7 @@ public:
     Mix_Chunk *wBounce;
     Mix_Chunk *wPaddleHit;
     bool soundEnabled;
+    bool musicEnabled;
 
     Paddle *paddle1;
     Paddle *paddle2;
@@ -118,6 +119,10 @@ public:
 
     int ballTrigger = -1;
     int delay;
+    int collisionTimer;
+
+    void explode(const Ogre::Vector3);
+    void clang(const Ogre::Vector3);
 
 protected:
     bool configure(void);
@@ -146,13 +151,9 @@ protected:
     void reset(void);
     bool setup(void);
 
-    //multiplayer
-    void selectGameType(void);
-    void hostGame(void);
-    void joinGame(void);
 
     void startFireworks();
-    void explode(const Ogre::Vector3);
+
 
 
     bool quit(const CEGUI::EventArgs& e);
@@ -160,6 +161,7 @@ protected:
     std::string getScoreBoardText(void);
     bool setupSDL(void);
     void switchSound(void);
+    void switchMusic(void);
 
 
     // Adjust mouse clipping area
@@ -192,6 +194,7 @@ protected:
     bool fireworksOn;
     Ogre::ParticleSystem* sunParticle;
     Ogre::ParticleSystem* ballParticle;
+    Ogre::ParticleSystem* clangParticle;
 
     CEGUI::MouseButton convertButton(OIS::MouseButtonID buttonID);
 
@@ -218,12 +221,12 @@ protected:
     CEGUI::OgreRenderer* mRenderer;
 
     CEGUI::Window *menuSheet;
-    CEGUI::Window *selectGameSheet;
     CEGUI::Window *gameSheet;
     CEGUI::Window *pauseSheet;
     CEGUI::Window *restartSheet;
     CEGUI::Window *scoreBoard;
     CEGUI::Window *sound;
+    CEGUI::Window *bgm;
     CEGUI::Window *victoryText;
 
     //PlayerWallCallback* pwcb;
