@@ -58,8 +58,10 @@ http://www.ogre3d.org/wiki/
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/Ogre/Renderer.h>
 
+//sdl 
 #include "SDL/SDL.h"
 #include "SDL/SDL_mixer.h"
+#include "SDL/SDL_net.h"
 
 #endif
 
@@ -87,11 +89,7 @@ http://www.ogre3d.org/wiki/
 //---------------------------------------------------------------------------
 
 struct ScoreCallback;
-//struct OpponentWallCallback;
-//struct PlayerWallCallback;
 struct PaddleCallback;
-//struct Paddle1Callback;
-//struct Paddle2Callback;
 struct SideWallCallback;
 
 class TutorialApplication : 
@@ -155,12 +153,9 @@ protected:
     void selectGameType(void);
     void hostGame(void);
     void joinGame(void);
-
+    void enterIP(void);
 
     void startFireworks();
-
-
-
     bool quit(const CEGUI::EventArgs& e);
 
     std::string getScoreBoardText(void);
@@ -234,13 +229,11 @@ protected:
     CEGUI::Window *sound;
     CEGUI::Window *bgm;
     CEGUI::Window *victoryText;
+    CEGUI::Editbox *joinIP;
+    //CEGUI::Window *ok;
 
-    //PlayerWallCallback* pwcb;
-    //OpponentWallCallback* owcb;
     ScoreCallback* pwcb;
     ScoreCallback* owcb;
-    //Paddle1Callback* p1cb;
-    //Paddle2Callback* p2cb;
     PaddleCallback* p1cb;
     PaddleCallback* p2cb;
     SideWallCallback* swcb;
@@ -248,6 +241,22 @@ protected:
     Mix_Chunk *wExplode;
     Mix_Music *wBGM;
     Mix_Chunk *wVictory;
+
+    //networking
+   
+    //https://r3dux.org/2011/01/a-simple-sdl_net-chat-server-client/
+    IPaddress serverIP;
+    std::string serverName;
+    TCPsocket serverSock;
+    TCPsocket clientSock;
+
+    int id;
+    char buffer[512];
+    int recievedByteCount = 0;
+    bool connected = false;
+    const unsigned short PORT = 4444;
+
+    SDLNet_SocketSet socketSet;
 
 
 

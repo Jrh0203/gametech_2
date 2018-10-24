@@ -433,26 +433,41 @@ void TutorialApplication::setupGUI(){
         menuSheet->addChild(start);
 
         CEGUI::Window *singleplayer = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-        singleplayer->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.30,0)));
+        singleplayer->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.20,0)));
         singleplayer->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
         singleplayer->setText("Singleplayer");
         singleplayer->subscribeEvent(CEGUI::PushButton::EventClicked, 
         CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
         selectGameSheet->addChild(singleplayer);
+        
         CEGUI::Window *host= wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-        host->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
+        host->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.35,0)));
         host->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
         host->setText("Host Game");
         host->subscribeEvent(CEGUI::PushButton::EventClicked, 
         CEGUI::SubscriberSlot(&TutorialApplication::hostGame, this));
         selectGameSheet->addChild(host);
-        CEGUI::Window *join= wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
-        join->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.60,0)));
+        
+        CEGUI::Window *join = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
+        join->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.50,0)));
         join->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
         join->setText("Join Game");
         join->subscribeEvent(CEGUI::PushButton::EventClicked, 
-        CEGUI::SubscriberSlot(&TutorialApplication::joinGame, this));
+        CEGUI::SubscriberSlot(&TutorialApplication::enterIP, this));
         selectGameSheet->addChild(join);
+
+        //edit box to get entered IP address
+        joinIP = static_cast<CEGUI::Editbox*>(wmgr.createWindow("TaharezLook/Editbox", "CEGUIDemo/QuitButton"));
+        joinIP->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.60,0)));
+        joinIP->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
+        //joinIP->setMaxTextLength((size_t)8);
+        joinIP->setText("Enter server name");
+        joinIP->setReadOnly(false);
+        joinIP->setVisible(false);
+        joinIP->subscribeEvent(CEGUI::Editbox::EventTextAccepted, 
+            CEGUI::Event::Subscriber(&TutorialApplication::joinGame,this));
+        selectGameSheet->addChild(joinIP);
+
 
         CEGUI::Window *resume = wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
         resume->setPosition(CEGUI::UVector2(CEGUI::UDim(0.40,0),CEGUI::UDim(0.45,0)));
@@ -749,6 +764,7 @@ void TutorialApplication::reset(void){
 
 void TutorialApplication::selectGameType(){
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(selectGameSheet);
+    selectGameSheet->setMousePassThroughEnabled(true); // this is important!
 }
 
 
@@ -770,12 +786,122 @@ void TutorialApplication::newGame(void){
     ball->push();
 }
 
-void TutorialApplication::hostGame(void)
-{
+void TutorialApplication::hostGame(void){   
+    std::cout << "hosting game" << std::endl;
+
+    if ( SDLNet_Init() < 0 ) {
+        fprintf(stderr, "Couldn't initialize net: %s\n", SDLNet_GetError());
+        SDL_Quit();
+        exit(1);
+    }
+
+    socketSet = SDLNet_AllocSocketSet(2);
+    if (socketSet == NULL)
+    {
+        std::cout << "Failed to allocate the socket set: " << SDLNet_GetError() << "\n";
+        exit(-1); // Quit!
+    }
+     
+    int hostResolved = SDLNet_ResolveHost(&serverIP, NULL, PORT);   
+    if (hostResolved == -1){
+        std::cout << "Failed to resolve the server host: " << SDLNet_GetError() << std::endl;
+    } else {// If we resolved the host successfully, output the details
+        // Get our IP address in proper dot-quad format by breaking up the 32-bit unsigned host address and splitting it into an array of four 8-bit unsigned numbers...
+        Uint8 * dotQuad = (Uint8*)&serverIP.host;
+
+        //... and then outputting them cast to integers. Then read the last 16 bits of the serverIP object to get the port number
+        std::cout << "Successfully resolved server host to IP: " << (unsigned short)dotQuad[0] << "." << (unsigned short)dotQuad[1] << "." << (unsigned short)dotQuad[2] << "." << (unsigned short)dotQuad[3];
+        std::cout << " port " << SDLNet_Read16(&serverIP.port) << std::endl;
+    }
+
+    serverSock = SDLNet_TCP_Open(&serverIP);
+
+    if ( serverSock == NULL ) {
+        fprintf(stderr, "Couldn't create socket: %s\n",SDLNet_GetError());
+        exit(-1);
+    }
+
+    SDLNet_TCP_AddSocket(socketSet, serverSock);
+
+    int activeSockets = 0;
+    std::cout << "about to loop...." << std::endl;
+    do {
+        //check activity of socket
+        activeSockets = SDLNet_CheckSockets(socketSet, 0);
+        if(activeSockets){
+            //this probably 
+            std::cout << "Server is active."  << std::endl; 
+        } else {
+            std::cout << "Awaiting connection..." <<std::endl;
+        }
+
+        //establish connection
+        std::cout << "checking socket activity..." <<std::endl;
+        int serverSocketActivity = SDLNet_SocketReady(serverSock);
+
+        std::cout << "checked activity: " << serverSocketActivity << std::endl;
+
+        if (serverSocketActivity){
+            std::cout << "in loop" <<std::endl;
+            clientSock = SDLNet_TCP_Accept(serverSock);
+            std::cout << "created client socket" <<std::endl;
+            SDLNet_TCP_AddSocket(socketSet, clientSock);
+            std::string ok = "OK";
+            strcpy( buffer, ok.c_str());
+             std::cout << "copied string" <<std::endl;
+            SDLNet_TCP_Send(clientSock, (void *)buffer, strlen(buffer)+1); 
+            std::cout << "Connection established!" << std::cout;
+        }
+    } while (activeSockets < 1); //while a connection is not established
+    //start the game as player 1
 }
 
-void TutorialApplication::joinGame(void)
-{
+void TutorialApplication::enterIP(void){
+    joinIP->setVisible(true);
+}
+
+void TutorialApplication::joinGame(void){
+    serverName = joinIP->getText().c_str();
+    std::cout << serverName << std::endl;
+    
+    socketSet = SDLNet_AllocSocketSet(1);
+    if (socketSet == NULL)
+    {
+        std::cout << "Failed to allocate the socket set: " << SDLNet_GetError() << "\n";
+        exit(-1); 
+    }
+     
+    int hostResolved = SDLNet_ResolveHost(&serverIP, serverName.c_str(), PORT);   
+    if (hostResolved == -1){
+        std::cout << "Failed to resolve the server host: " << SDLNet_GetError() << std::endl;
+    } else {// If we resolved the host successfully, output the details
+        // Get our IP address in proper dot-quad format by breaking up the 32-bit unsigned host address and splitting it into an array of four 8-bit unsigned numbers...
+        Uint8 * dotQuad = (Uint8*)&serverIP.host;
+
+        //... and then outputting them cast to integers. Then read the last 16 bits of the serverIP object to get the port number
+        std::cout << "Successfully resolved server host to IP: " << (unsigned short)dotQuad[0] << "." << (unsigned short)dotQuad[1] << "." << (unsigned short)dotQuad[2] << "." << (unsigned short)dotQuad[3];
+        std::cout << " port " << SDLNet_Read16(&serverIP.port) << std::endl;
+    }
+
+    clientSock = SDLNet_TCP_Open(&serverIP);
+
+    if ( clientSock == NULL ) {
+        fprintf(stderr, "Couldn't create socket: %s\n",SDLNet_GetError());
+        exit(-1);
+    }
+
+    SDLNet_TCP_AddSocket(socketSet, clientSock);
+
+    //attempt to connect to server
+    int activeSockets = SDLNet_CheckSockets(socketSet, 5000);
+    int gotServerResponse = SDLNet_SocketReady(clientSock);
+    if (gotServerResponse){
+        int serverResposeByteCount = SDLNet_TCP_Recv(clientSock, buffer, 512);
+
+        if ( strcmp(buffer, "OK") == 0){
+            std::cout << "Connection accepted, joining game." << std::endl;
+        }
+    }
 }
 
 void TutorialApplication::pauseGame(){
@@ -820,7 +946,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_K: paddle1->changeColor(); break;
       case OIS::KC_F: startFireworks(); break;
       case OIS::KC_T: explode(Ogre::Vector3()); break;
-      case OIS::KC_G: clang(ball->node->getPosition()); break;
+      //case OIS::KC_G: clang(ball->node->getPosition()); break;
     }
 
   CEGUI::GUIContext& context = CEGUI::System::getSingleton().getDefaultGUIContext();
@@ -830,8 +956,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
 }
 
 
-bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg)
-{
+bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg){
   
     //std::cerr << "Key! " << '\n';
     switch(arg.key){
