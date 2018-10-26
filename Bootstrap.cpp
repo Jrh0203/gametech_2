@@ -69,7 +69,11 @@ struct ScoreCallback : public btCollisionWorld::ContactResultCallback
         //     Mix_PlayChannel(-1, context->wBounce, 0);
         //    // context->ballTrigger = 3;
         // }
-        context->updateScore(player);
+        if (context->scoreDelay<0){
+            context->updateScore(player);
+            context->scoreDelay=100;
+        }
+        
     }
 
     TutorialApplication* context;
@@ -164,6 +168,7 @@ TutorialApplication::TutorialApplication()
   fireworksOn=false;
 
   delay = 15;
+  scoreDelay = 15;
   collisionTimer = 0;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
@@ -1057,6 +1062,9 @@ bool TutorialApplication::keyReleased(const OIS::KeyEvent &arg){
 
 bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
+    scoreDelay-=1;
+    if (scoreDelay<-1)
+        scoreDelay = -1;
     if(mWindow->isClosed())
       return false;
 
@@ -1075,9 +1083,12 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
        paddle1->moveRight();
     }
 
+    //paddle auto move
+    /*
     if (paddle2 && ball){
         paddle2->updatePosition(ball->getNode()->getPosition());
     }
+    */
 
     //ball switches colors when it crosses center of gamefield
     if ((int)ball->getNode()->getPosition().z == 0){
@@ -1152,28 +1163,25 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
     }
 
     idx+=1;
-    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-        //server send info
-    if (!isClient){
-        packet p;
-        p.valid = true;
-        p.serverPaddlePos = paddle1->node->getPosition();
-        sendPacket(p);
-    
-    } else {
-        //client receive info
-        packet *  ptest = readPacket();
-        if (ptest->valid)
-            paddle1->movePaddleLocation(ptest->serverPaddlePos);
+    packet p;
+    p.valid = true;
+    p.paddlePos = paddle1->node->getPosition();
+    p.paddleColor = paddle1->color;
+    p.ballPos = ball->node->getPosition();
+    p.ballColor = ball->color;
+
+    sendPacket(p);
+
+
+    packet *  ptest = readPacket();
+    if (ptest->valid){
+        paddle2->movePaddleLocation(ptest->paddlePos);
+        paddle2->changeColor(ptest->paddleColor);
+        ball->setColor(ptest->ballColor);
+        if (isClient)
+            ball->moveBallLocation(ptest->ballPos);
     }
-
-    
-
-    //memset(&msg, 0, sizeof(msg));
-
-    //send(newSd, &orange, sizeof(orange), 0);
-    //sendPacket(orange);
 
     return true;
 }

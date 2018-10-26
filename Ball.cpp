@@ -43,6 +43,14 @@ public:
         randomizeColor();
 	}
 
+	void moveBallLocation(Ogre::Vector3 ballPos){
+		btTransform transform;
+		transform = body->getWorldTransform();
+		transform.setOrigin(btVector3(ballPos.x, ballPos.y, -ballPos.z));
+		body->setWorldTransform(transform);
+		body->getMotionState()->setWorldTransform(transform);
+	}
+
 	~Ball(){}; 
 
 	void push(){
@@ -69,6 +77,11 @@ public:
 		color += (rand() % 2)+1;
 		color%=3;
 		//0 Blue, 1 Red, 2 Green for now
+		setColor(color);
+	}
+
+	void setColor(int col){
+		color = col;
 		if(color == 0)
 			ent->setMaterialName("ball/Blue");
 		if(color == 1)

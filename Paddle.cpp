@@ -129,7 +129,7 @@ public:
 	void movePaddleLocation(Ogre::Vector3 paddlePos){
 		btTransform transform;
 		transform = body->getWorldTransform();
-		transform.setOrigin(btVector3(paddlePos.x, paddlePos.y, paddlePos.z));
+		transform.setOrigin(btVector3(paddlePos.x, paddlePos.y, -40));
 		body->setWorldTransform(transform);
 		body->getMotionState()->setWorldTransform(transform);
 	}

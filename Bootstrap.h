@@ -117,6 +117,7 @@ public:
 
     int ballTrigger = -1;
     int delay;
+    int scoreDelay;
     int collisionTimer;
 
     void explode(const Ogre::Vector3);
@@ -124,7 +125,10 @@ public:
 
     struct packet {
         bool valid;
-        Ogre::Vector3 serverPaddlePos;
+        Ogre::Vector3 paddlePos;
+        int paddleColor;
+        Ogre::Vector3 ballPos;
+        int ballColor;
     };
 
 protected:

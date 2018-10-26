@@ -10,7 +10,7 @@ protected:
 	btScalar mass;
 	MyMotionState* motionState;
 	btVector3 startPos;
-	int color;
+	
 	
 
 public: 
@@ -21,7 +21,7 @@ public:
 	btVector3 startVel;
 
 	~Object(){}
-
+	int color;
 	Ogre::SceneNode* getNode() { return node; } 
 
 	btRigidBody* getRigidBody(){return body;}
