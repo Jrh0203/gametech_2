@@ -479,7 +479,7 @@ void TutorialApplication::setupGUI(){
         join->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
         join->setText("Join Game");
         join->subscribeEvent(CEGUI::PushButton::EventClicked, 
-        CEGUI::SubscriberSlot(&TutorialApplication::enterIP, this));
+            CEGUI::SubscriberSlot(&TutorialApplication::enterIP, this));
         selectGameSheet->addChild(join);
 
         //edit box to get entered IP address
@@ -488,10 +488,10 @@ void TutorialApplication::setupGUI(){
         joinIP->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
         //joinIP->setMaxTextLength((size_t)8);
         joinIP->setText("Enter server name");
-        joinIP->setReadOnly(false);
         joinIP->setVisible(false);
-        joinIP->subscribeEvent(CEGUI::Editbox::EventTextAccepted, 
-            CEGUI::Event::Subscriber(&TutorialApplication::joinGame,this));
+        joinIP->setReadOnly(true);
+        joinIP->subscribeEvent(CEGUI::Window::EventMouseClick, 
+            CEGUI::SubscriberSlot(&TutorialApplication::clearIP,this));
         selectGameSheet->addChild(joinIP);
 
 
@@ -897,9 +897,17 @@ void TutorialApplication::enterIP(void){
     joinIP->setVisible(true);
 }
 
+void TutorialApplication::clearIP(void){
+    joinIP->setText("");
+    joinIP->setReadOnly(false);
+    joinIP->subscribeEvent(CEGUI::Editbox::EventTextAccepted, 
+        CEGUI::Event::Subscriber(&TutorialApplication::joinGame,this));
+}
+
 void TutorialApplication::joinGame(void){
     //we need 2 things: ip address and port number, in that order
     isClient = true;
+    cout << "Given IP address " << joinIP->getText() << endl;
     char *serverIp = "128.83.139.218";
     //create a message buffer 
     //setup a socket and connection tools 
@@ -907,19 +915,18 @@ void TutorialApplication::joinGame(void){
     bzero((char*)&sendSockAddr, sizeof(sendSockAddr)); 
     sendSockAddr.sin_family = AF_INET; 
     sendSockAddr.sin_addr.s_addr = 
-        inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
+            inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
     sendSockAddr.sin_port = htons(port);
     clientSd = socket(AF_INET, SOCK_STREAM, 0);
     checkForClientConnection = true;
 }
 
 void TutorialApplication::checkJoinConnection(void){
-    cout << "Waiting on connect" << endl;
     int status = connect(clientSd,
                          (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
     if(status < 0)
     {
-        cout << "Error connecting to socket!" << endl;
+        cout << "No host found" << endl;
         return;
     }
     cout << "Connected to the server!" << endl;
@@ -929,38 +936,6 @@ void TutorialApplication::checkJoinConnection(void){
     struct timeval start1, end1;
     gettimeofday(&start1, NULL);
     idx = 0;
-    /*
-    while(1)
-    {   
-        packet apple;
-        apple.a = idx;
-        apple.b = idx*2;
-        apple.c = idx*3;
-        idx+=1;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-        cout << ">";
-        string data;
-        data = std::to_string(idx);
-        //getline(cin, data);
-        
-        memset(&msg, 0, sizeof(msg));//clear the buffer
-        strcpy(msg, data.c_str());
-        if(data == "exit")
-        {
-            send(clientSd, (char*)&msg, strlen(msg), 0);
-            break;
-        }
-        //send(clientSd, &apple, sizeof(apple), 0);
-        sendPacket(apple);
-
-        packet *  ptest = readPacket();
-        cout << "From Server: " << ptest->b << endl;
-        cout << ">";
-    }
-    gettimeofday(&end1, NULL);
-    close(clientSd);
-    */
     checkForClientConnection = false;
     newGame();
 }
@@ -1000,7 +975,7 @@ void TutorialApplication::checkConnection(void){
         newGame();
     }else{
         //no connection still
-        cout << "No connection yet" << endl;
+        //cout << "No connection yet" << endl;
         return;
     }
 }
@@ -1101,18 +1076,13 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
            paddle1->moveRight();
         }
 
-<<<<<<< HEAD
     //paddle auto move
     /*
     if (paddle2 && ball){
         paddle2->updatePosition(ball->getNode()->getPosition());
     }
     */
-=======
-        if (paddle2 && ball){
-            paddle2->updatePosition(ball->getNode()->getPosition());
-        }
->>>>>>> 6da1430706e1a482ad0a811739012b9367815c6a
+
 
         //ball switches colors when it crosses center of gamefield
         if ((int)ball->getNode()->getPosition().z == 0){
@@ -1190,27 +1160,28 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         checkConnection();
     }else if(checkForClientConnection){
         checkJoinConnection();
-    }
+    }else{
 
-    idx+=1;
+        idx+=1;
 
-    packet p;
-    p.valid = true;
-    p.paddlePos = paddle1->node->getPosition();
-    p.paddleColor = paddle1->color;
-    p.ballPos = ball->node->getPosition();
-    p.ballColor = ball->color;
+        packet p;
+        p.valid = true;
+        p.paddlePos = paddle1->node->getPosition();
+        p.paddleColor = paddle1->color;
+        p.ballPos = ball->node->getPosition();
+        p.ballColor = ball->color;
 
-    sendPacket(p);
+        sendPacket(p);
 
 
-    packet *  ptest = readPacket();
-    if (ptest->valid){
-        paddle2->movePaddleLocation(ptest->paddlePos);
-        paddle2->changeColor(ptest->paddleColor);
-        ball->setColor(ptest->ballColor);
-        if (isClient)
-            ball->moveBallLocation(ptest->ballPos);
+        packet *  ptest = readPacket();
+        if (ptest->valid){
+            paddle2->movePaddleLocation(ptest->paddlePos);
+            paddle2->changeColor(ptest->paddleColor);
+            ball->setColor(ptest->ballColor);
+            if (isClient)
+                ball->moveBallLocation(ptest->ballPos);
+        }
     }
 
     return true;

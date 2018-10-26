@@ -170,6 +170,7 @@ protected:
     void hostGame(void);
     void joinGame(void);
     void enterIP(void);
+    void clearIP(void);
 
     void startFireworks();
     bool quit(const CEGUI::EventArgs& e);
@@ -185,6 +186,7 @@ protected:
     void sendToSocket(packet, int socket);
     void checkConnection(void);
     void checkJoinConnection(void);
+
 
     packet* readPacket();
     packet* readAsClient();
