@@ -33,8 +33,6 @@ THE SOFTWARE
 #include <iostream>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -900,20 +898,24 @@ void TutorialApplication::joinGame(void){
     char *serverIp = "128.83.139.218";
     //create a message buffer 
     //setup a socket and connection tools 
-    struct hostent* host = gethostbyname(serverIp); 
-    sockaddr_in sendSockAddr;   
+    struct hostent* host = gethostbyname(serverIp);  
     bzero((char*)&sendSockAddr, sizeof(sendSockAddr)); 
     sendSockAddr.sin_family = AF_INET; 
     sendSockAddr.sin_addr.s_addr = 
         inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
     sendSockAddr.sin_port = htons(port);
     clientSd = socket(AF_INET, SOCK_STREAM, 0);
-    //try to connect...
+    checkForClientConnection = true;
+}
+
+void TutorialApplication::checkJoinConnection(void){
+    cout << "Waiting on connect" << endl;
     int status = connect(clientSd,
                          (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
     if(status < 0)
     {
-        cout<<"Error connecting to socket!"<<endl;
+        cout << "Error connecting to socket!" << endl;
+        return;
     }
     cout << "Connected to the server!" << endl;
     if(fcntl(clientSd, F_SETFL, fcntl(clientSd, F_GETFL) | O_NONBLOCK) < 0) {
@@ -954,7 +956,8 @@ void TutorialApplication::joinGame(void){
     gettimeofday(&end1, NULL);
     close(clientSd);
     */
-   newGame();
+    checkForClientConnection = false;
+    newGame();
 }
 
 void TutorialApplication::checkConnection(void){
@@ -1168,6 +1171,8 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
     if(checkForConnection){
         checkConnection();
+    }else if(checkForClientConnection){
+        checkJoinConnection();
     }
 
     idx+=1;

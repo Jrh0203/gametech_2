@@ -63,6 +63,10 @@ http://www.ogre3d.org/wiki/
 #include "SDL/SDL_mixer.h"
 #include "SDL/SDL_net.h"
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+
 #endif
 
 #ifdef OGRE_STATIC_LIB
@@ -176,6 +180,7 @@ protected:
     void sendToServer(packet);
     void sendToSocket(packet, int socket);
     void checkConnection(void);
+    void checkJoinConnection(void);
 
     packet* readPacket();
     packet* readAsClient();
@@ -282,11 +287,13 @@ protected:
 
     SDLNet_SocketSet socketSet;
 
-    //variables for connection with clients
+    //variables for connection with clients/servers
     bool checkForConnection = false;
+    bool checkForClientConnection = false;
     fd_set read_fds;
     struct timeval timeout;
     int serverSd;
+    sockaddr_in sendSockAddr;  
 
 #ifdef OGRE_STATIC_LIB
     Ogre::StaticPluginLoader m_StaticPluginLoader;
