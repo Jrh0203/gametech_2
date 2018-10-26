@@ -123,9 +123,8 @@ public:
     void clang(const Ogre::Vector3);
 
     struct packet {
-        double a;
-        double b;
-        double c;
+        bool valid;
+        Ogre::Vector3 serverPaddlePos;
     };
 
 protected:

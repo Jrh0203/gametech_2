@@ -126,6 +126,14 @@ public:
 		body->getMotionState()->setWorldTransform(transform);	
 	}
 
+	void movePaddleLocation(Ogre::Vector3 paddlePos){
+		btTransform transform;
+		transform = body->getWorldTransform();
+		transform.setOrigin(btVector3(paddlePos.x, paddlePos.y, paddlePos.z));
+		body->setWorldTransform(transform);
+		body->getMotionState()->setWorldTransform(transform);
+	}
+
 	void updatePosition(Ogre::Vector3 ballPos){
 
 		body->activate(true);	

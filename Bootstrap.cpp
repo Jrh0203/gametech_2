@@ -898,15 +898,21 @@ void TutorialApplication::hostGame(void){
 
     cerr << "Error accepting request from client!" << endl;
     //Turn the socket to non blocking mode
-    if(fcntl(serverSd, F_SETFL, fcntl(serverSd, F_GETFL) | O_NONBLOCK) < 0) {
+    if(fcntl(newSd, F_SETFL, fcntl(serverSd, F_GETFL) | O_NONBLOCK) < 0) {
     // handle error
     }
+    /*
+    if(fcntl(newSd, F_SETFL, fcntl(sockfd, F_GETFL) | O_NONBLOCK) < 0) {
+        // handle error
+    }
+    */
 
     cout << "Connected with client!" << endl;
     //lets keep track of the session time
     struct timeval start1, end1;
     gettimeofday(&start1, NULL);
     //also keep track of the amount of data sent as well
+    newGame();
 }
 
 void TutorialApplication::enterIP(void){
@@ -941,6 +947,7 @@ void TutorialApplication::joinGame(void){
     struct timeval start1, end1;
     gettimeofday(&start1, NULL);
     idx = 0;
+    /*
     while(1)
     {   
         packet apple;
@@ -948,7 +955,7 @@ void TutorialApplication::joinGame(void){
         apple.b = idx*2;
         apple.c = idx*3;
         idx+=1;
-        std::this_thread::sleep_for(std::chrono::milliseconds(800));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         cout << ">";
         string data;
@@ -971,6 +978,8 @@ void TutorialApplication::joinGame(void){
     }
     gettimeofday(&end1, NULL);
     close(clientSd);
+    */
+   newGame();
 }
 
 
@@ -1144,20 +1153,27 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
     idx+=1;
     //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    cout << msg << endl;
-    packet *  ptest = readPacket();
-    cout << "Client: " << ptest->a << endl;
-    cout << ">";
 
-    packet orange;
-    orange.a = idx;
-    orange.b = idx*2;
-    orange.c = idx*3;
+        //server send info
+    if (!isClient){
+        packet p;
+        p.valid = true;
+        p.serverPaddlePos = paddle1->node->getPosition();
+        sendPacket(p);
+    
+    } else {
+        //client receive info
+        packet *  ptest = readPacket();
+        if (ptest->valid)
+            paddle1->movePaddleLocation(ptest->serverPaddlePos);
+    }
 
-    memset(&msg, 0, sizeof(msg));
+    
+
+    //memset(&msg, 0, sizeof(msg));
 
     //send(newSd, &orange, sizeof(orange), 0);
-    sendPacket(orange);
+    //sendPacket(orange);
 
     return true;
 }
