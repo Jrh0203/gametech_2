@@ -175,6 +175,7 @@ protected:
     void sendToClient(packet);
     void sendToServer(packet);
     void sendToSocket(packet, int socket);
+    void checkConnection(void);
 
     packet* readPacket();
     packet* readAsClient();
@@ -281,7 +282,11 @@ protected:
 
     SDLNet_SocketSet socketSet;
 
-
+    //variables for connection with clients
+    bool checkForConnection = false;
+    fd_set read_fds;
+    struct timeval timeout;
+    int serverSd;
 
 #ifdef OGRE_STATIC_LIB
     Ogre::StaticPluginLoader m_StaticPluginLoader;

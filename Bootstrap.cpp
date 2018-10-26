@@ -882,37 +882,12 @@ void TutorialApplication::hostGame(void){
     cout << "Waiting for a client to connect..." << endl;
     //listen for up to 5 requests at a time
     listen(serverSd, 5);
-    
-    //receive a request from client using accept
-    //we need a new address to connect with the client
-    sockaddr_in newSockAddr;
-    socklen_t newSockAddrSize = sizeof(newSockAddr);
-    //accept, create a new socket descriptor to 
-    //handle the new connection with client
-    newSd = accept(serverSd, (sockaddr *)&newSockAddr, &newSockAddrSize);
-    if(newSd < 0)
-    {
-        cerr << "Error accepting request from client!" << endl;
-        exit(1);
-    }
 
-    cerr << "Error accepting request from client!" << endl;
-    //Turn the socket to non blocking mode
-    if(fcntl(newSd, F_SETFL, fcntl(serverSd, F_GETFL) | O_NONBLOCK) < 0) {
-    // handle error
-    }
-    /*
-    if(fcntl(newSd, F_SETFL, fcntl(sockfd, F_GETFL) | O_NONBLOCK) < 0) {
-        // handle error
-    }
-    */
-
-    cout << "Connected with client!" << endl;
-    //lets keep track of the session time
-    struct timeval start1, end1;
-    gettimeofday(&start1, NULL);
-    //also keep track of the amount of data sent as well
-    newGame();
+    FD_ZERO(&read_fds);
+    FD_SET(serverSd, &read_fds);
+    timeout.tv_sec = 0;  // 1s timeout
+    timeout.tv_usec = 0;
+    checkForConnection = true;
 }
 
 void TutorialApplication::enterIP(void){
@@ -980,6 +955,46 @@ void TutorialApplication::joinGame(void){
     close(clientSd);
     */
    newGame();
+}
+
+void TutorialApplication::checkConnection(void){
+    int select_status = select(serverSd+1, &read_fds, NULL, NULL, &timeout);
+    if(select_status == -1){
+
+    }else if(select_status > 0){
+        //connection is ready
+        //receive a request from client using accept
+        //we need a new address to connect with the client
+        sockaddr_in newSockAddr;
+        socklen_t newSockAddrSize = sizeof(newSockAddr);
+        //accept, create a new socket descriptor to 
+        //handle the new connection with client
+
+        newSd = accept(serverSd, (sockaddr *)&newSockAddr, &newSockAddrSize);
+        if(newSd < 0)
+        {
+            cerr << "Error accepting request from client!" << endl;
+            exit(1);
+        }
+
+        cerr << "Error accepting request from client!" << endl;
+        //Turn the socket to non blocking mode
+        if(fcntl(serverSd, F_SETFL, fcntl(serverSd, F_GETFL) | O_NONBLOCK) < 0) {
+        // handle error
+        }
+
+        cout << "Connected with client!" << endl;
+        //lets keep track of the session time
+        struct timeval start1, end1;
+        gettimeofday(&start1, NULL);
+        checkForConnection = false;
+        //also keep track of the amount of data sent as well
+        newGame();
+    }else{
+        //no connection still
+        cout << "No connection yet" << endl;
+        return;
+    }
 }
 
 
@@ -1068,87 +1083,91 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
     if (gameRunning){
 
-    if (keys[6]){
-       paddle1->moveLeft();
+        if (keys[6]){
+           paddle1->moveLeft();
+        }
+        if (keys[7]){
+           paddle1->moveRight();
+        }
+
+        if (paddle2 && ball){
+            paddle2->updatePosition(ball->getNode()->getPosition());
+        }
+
+        //ball switches colors when it crosses center of gamefield
+        if ((int)ball->getNode()->getPosition().z == 0){
+            //ball->randomizeColor();
+            paddle2->opponentChangeColor(ball->getColor());
+
+        }
+
+        double minY = walls[0]->wallPosition().getY();
+        double maxY = walls[3]->wallPosition().getY();
+        double minX = walls[2]->wallPosition().getX();
+        double maxX = walls[1]->wallPosition().getX();
+
+
+
+        CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
+
+        dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
+        
+        checkCollisions();
+
+        paddle1->playerUpdatePosition(mMouse->getMouseState().X.rel, -mMouse->getMouseState().Y.rel, minX, maxX, minY, maxY);
+
+        btTransform transform;
+        transform = paddle1->body->getWorldTransform();
+        if(mCamera && ball){
+            //Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
+            Ogre::Vector3 paddlePosition = Ogre::Vector3(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
+            //Ogre::Vector3 curPos = mCamNode->getPosition();
+            //Ogre::Vector3 desiredPos = Ogre::Vector3(paddlePosition.x, 30, paddlePosition.z*2);
+            //double diviser = 1; // make diviser > 1 for smooth camera, probably a number in the low hundereds maybe
+            //Ogre::Vector3 cameraPosition = Ogre::Vector3(curPos.x+(desiredPos.x-curPos.x)/diviser, paddlePosition.y, curPos.z+(desiredPos.z-curPos.z)/diviser);
+            Ogre::Vector3 cameraPosition = Ogre::Vector3(paddlePosition.x, paddlePosition.y+5, paddlePosition.z+40);
+            mCamNode->setPosition(cameraPosition);
+            mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);
+        }
+
+        if (ballTrigger>0){
+            ballTrigger-=1;
+        } else if (ballTrigger==0) {
+            ball->randomizeColor();
+            ballTrigger-=1;
+            ball->speedUp(1.12);
+            paddle2->speedUp(1.12);
+        }
+
+        if (collisionTimer>0){
+            collisionTimer-=1;
+        }
+        
+        } 
+        else {
+                    //if game is paused or hasnt started, move camera with arrow keys
+        if (keys[0]){
+             mCamNode->translate(0,0,-0.1);
+         }
+         if (keys[1]){
+             mCamNode->translate(-0.1,0,0);
+        }
+         if (keys[2]){
+            mCamNode->translate(0,0,0.1);
+         }
+         if (keys[3]){
+             mCamNode->translate(0.1,0,0);
+         }
+         if (keys[4]){
+             mCamNode->translate(0,0.1,0);
+        }
+         if (keys[5]){
+         mCamNode->translate(0,-0.1,0);
+        }
     }
-    if (keys[7]){
-       paddle1->moveRight();
-    }
 
-    if (paddle2 && ball){
-        paddle2->updatePosition(ball->getNode()->getPosition());
-    }
-
-    //ball switches colors when it crosses center of gamefield
-    if ((int)ball->getNode()->getPosition().z == 0){
-        //ball->randomizeColor();
-        paddle2->opponentChangeColor(ball->getColor());
-
-    }
-
-    double minY = walls[0]->wallPosition().getY();
-    double maxY = walls[3]->wallPosition().getY();
-    double minX = walls[2]->wallPosition().getX();
-    double maxX = walls[1]->wallPosition().getX();
-
-
-
-    CEGUI::System::getSingleton().injectTimePulse(evt.timeSinceLastFrame);
-
-    dynamicsWorld->stepSimulation(evt.timeSinceLastFrame,5);
-    
-    checkCollisions();
-
-    paddle1->playerUpdatePosition(mMouse->getMouseState().X.rel, -mMouse->getMouseState().Y.rel, minX, maxX, minY, maxY);
-
-    btTransform transform;
-    transform = paddle1->body->getWorldTransform();
-    if(mCamera && ball){
-        //Ogre::Vector3 paddlePosition = paddle1->getNode()->getPosition();
-        Ogre::Vector3 paddlePosition = Ogre::Vector3(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
-        //Ogre::Vector3 curPos = mCamNode->getPosition();
-        //Ogre::Vector3 desiredPos = Ogre::Vector3(paddlePosition.x, 30, paddlePosition.z*2);
-        //double diviser = 1; // make diviser > 1 for smooth camera, probably a number in the low hundereds maybe
-        //Ogre::Vector3 cameraPosition = Ogre::Vector3(curPos.x+(desiredPos.x-curPos.x)/diviser, paddlePosition.y, curPos.z+(desiredPos.z-curPos.z)/diviser);
-        Ogre::Vector3 cameraPosition = Ogre::Vector3(paddlePosition.x, paddlePosition.y+5, paddlePosition.z+40);
-        mCamNode->setPosition(cameraPosition);
-        mCamera->lookAt(paddlePosition.x,paddlePosition.y,0);
-    }
-
-    if (ballTrigger>0){
-        ballTrigger-=1;
-    } else if (ballTrigger==0) {
-        ball->randomizeColor();
-        ballTrigger-=1;
-        ball->speedUp(1.12);
-        paddle2->speedUp(1.12);
-    }
-
-    if (collisionTimer>0){
-        collisionTimer-=1;
-    }
-    
-    } 
-    else {
-                //if game is paused or hasnt started, move camera with arrow keys
-    if (keys[0]){
-         mCamNode->translate(0,0,-0.1);
-     }
-     if (keys[1]){
-         mCamNode->translate(-0.1,0,0);
-    }
-     if (keys[2]){
-        mCamNode->translate(0,0,0.1);
-     }
-     if (keys[3]){
-         mCamNode->translate(0.1,0,0);
-     }
-     if (keys[4]){
-         mCamNode->translate(0,0.1,0);
-    }
-     if (keys[5]){
-     mCamNode->translate(0,-0.1,0);
-     }
+    if(checkForConnection){
+        checkConnection();
     }
 
     idx+=1;
