@@ -907,41 +907,6 @@ void TutorialApplication::hostGame(void){
     struct timeval start1, end1;
     gettimeofday(&start1, NULL);
     //also keep track of the amount of data sent as well
-    while(1)
-    {
-        idx+=1;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        //receive a message from the client (listen)
-        //cout << "Awaiting client response..." << endl;
-        //memset(&msg, 0, sizeof(msg));//clear the buffer
-        //recv(newSd, (char*)&msg, sizeof(msg), 0);
-        /*
-        if(!strcmp(msg, "exit"))
-        {
-            cout << "Client has quit the session" << endl;
-            break;
-        }
-        */
-        cout << msg << endl;
-        packet *  ptest = readPacket();
-        cout << "Client: " << ptest->a << endl;
-        cout << ">";
-
-        packet orange;
-        orange.a = idx;
-        orange.b = idx*2;
-        orange.c = idx*3;
-
-        memset(&msg, 0, sizeof(msg));
-
-        //send(newSd, &orange, sizeof(orange), 0);
-        sendPacket(orange);
-    }
-    //we need to close the socket descriptors after we're all done
-    gettimeofday(&end1, NULL);
-    close(newSd);
-    close(serverSd);
-
 }
 
 void TutorialApplication::enterIP(void){
@@ -1176,6 +1141,23 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
      mCamNode->translate(0,-0.1,0);
      }
     }
+
+    idx+=1;
+    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    cout << msg << endl;
+    packet *  ptest = readPacket();
+    cout << "Client: " << ptest->a << endl;
+    cout << ">";
+
+    packet orange;
+    orange.a = idx;
+    orange.b = idx*2;
+    orange.c = idx*3;
+
+    memset(&msg, 0, sizeof(msg));
+
+    //send(newSd, &orange, sizeof(orange), 0);
+    sendPacket(orange);
 
     return true;
 }
