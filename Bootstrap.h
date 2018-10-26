@@ -122,7 +122,16 @@ public:
     void explode(const Ogre::Vector3);
     void clang(const Ogre::Vector3);
 
+    struct packet {
+        double a;
+        double b;
+        double c;
+    };
+
 protected:
+
+    
+
     bool configure(void);
     void chooseSceneManager(void);
     void createCamera(void);
@@ -162,6 +171,18 @@ protected:
     bool setupSDL(void);
     void switchSound(void);
     void switchMusic(void);
+
+    void sendPacket(packet);
+    void sendToClient(packet);
+    void sendToServer(packet);
+    void sendToSocket(packet, int socket);
+
+    packet* readPacket();
+    packet* readAsClient();
+    packet* readAsServer();
+    packet* readFromSocket(int socket);
+
+    bool isClient = false;
 
 
     // Adjust mouse clipping area
@@ -250,11 +271,14 @@ protected:
     TCPsocket serverSock;
     TCPsocket clientSock;
 
-    int id;
-    char buffer[512];
-    int recievedByteCount = 0;
+    
+
+    int newSd;
+    int clientSd;
+    int idx = 0;
     bool connected = false;
-    const unsigned short PORT = 4444;
+    int port = 1234;
+    char msg[sizeof(packet)*10];
 
     SDLNet_SocketSet socketSet;
 

@@ -30,6 +30,27 @@ THE SOFTWARE
 
 #include <exception>
 #include "Bootstrap.h"
+#include <iostream>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/uio.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <fstream>
+#include <chrono>
+#include <thread>
+
+using namespace std;
+
+struct packet;
 
 struct ScoreCallback : public btCollisionWorld::ContactResultCallback
 { 
@@ -115,6 +136,8 @@ struct SideWallCallback : public btCollisionWorld::ContactResultCallback
 
     TutorialApplication* context;
 };
+
+
 
 
 TutorialApplication::TutorialApplication()
@@ -785,75 +808,140 @@ void TutorialApplication::newGame(void){
     paddle2->opponentChangeColor(ball->getColor());
     ball->push();
 }
+void TutorialApplication::sendPacket(TutorialApplication::packet packet){
+    if (!isClient){
+        sendToClient(packet);
+    } else {
+        sendToServer(packet);
+    }
+}
+
+void TutorialApplication::sendToClient(TutorialApplication::packet packet){
+    sendToSocket(packet, newSd);
+}
+
+void TutorialApplication::sendToServer(TutorialApplication::packet packet){
+    sendToSocket(packet, clientSd);
+}
+
+void TutorialApplication::sendToSocket(TutorialApplication::packet packet, int socket){
+    send(socket, &packet, sizeof(packet), 0);
+}
+
+TutorialApplication::packet* TutorialApplication::readPacket(){
+    if (isClient){
+        return readAsClient();
+    } else {
+        return readAsServer();
+    }
+}
+
+TutorialApplication::packet* TutorialApplication::readAsClient(){
+    return readFromSocket(clientSd);
+}
+
+TutorialApplication::packet* TutorialApplication::readAsServer(){
+    return readFromSocket(newSd);
+}
+
+TutorialApplication::packet* TutorialApplication::readFromSocket(int socket){
+    memset(&msg, 0, sizeof(msg));//clear the buffer
+    recv(socket, (char*)&msg, sizeof(msg), 0);
+    return (packet*)(&msg);
+}
 
 void TutorialApplication::hostGame(void){   
-    std::cout << "hosting game" << std::endl;
-
-    if ( SDLNet_Init() < 0 ) {
-        fprintf(stderr, "Couldn't initialize net: %s\n", SDLNet_GetError());
-        SDL_Quit();
+    //grab the port number
+    //buffer to send and receive messages with
+    
+     
+    //setup a socket and connection tools
+    sockaddr_in servAddr;
+    bzero((char*)&servAddr, sizeof(servAddr));
+    servAddr.sin_family = AF_INET;
+    servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servAddr.sin_port = htons(port);
+ 
+    //open stream oriented socket with internet address
+    //also keep track of the socket descriptor
+    int serverSd = socket(AF_INET, SOCK_STREAM, 0);
+    if(serverSd < 0)
+    {
+        cerr << "Error establishing the server socket" << endl;
+        exit(0);
+    }
+    
+    //bind the socket to its local address
+    int bindStatus = bind(serverSd, (struct sockaddr*) &servAddr, 
+        sizeof(servAddr));
+    if(bindStatus < 0)
+    {
+        cerr << "Error binding socket to local address" << endl;
+        exit(0);
+    }
+    cout << "Waiting for a client to connect..." << endl;
+    //listen for up to 5 requests at a time
+    listen(serverSd, 5);
+    
+    //receive a request from client using accept
+    //we need a new address to connect with the client
+    sockaddr_in newSockAddr;
+    socklen_t newSockAddrSize = sizeof(newSockAddr);
+    //accept, create a new socket descriptor to 
+    //handle the new connection with client
+    newSd = accept(serverSd, (sockaddr *)&newSockAddr, &newSockAddrSize);
+    if(newSd < 0)
+    {
+        cerr << "Error accepting request from client!" << endl;
         exit(1);
     }
 
-    socketSet = SDLNet_AllocSocketSet(2);
-    if (socketSet == NULL)
+    cerr << "Error accepting request from client!" << endl;
+    //Turn the socket to non blocking mode
+    if(fcntl(serverSd, F_SETFL, fcntl(serverSd, F_GETFL) | O_NONBLOCK) < 0) {
+    // handle error
+    }
+
+    cout << "Connected with client!" << endl;
+    //lets keep track of the session time
+    struct timeval start1, end1;
+    gettimeofday(&start1, NULL);
+    //also keep track of the amount of data sent as well
+    while(1)
     {
-        std::cout << "Failed to allocate the socket set: " << SDLNet_GetError() << "\n";
-        exit(-1); // Quit!
-    }
-     
-    int hostResolved = SDLNet_ResolveHost(&serverIP, NULL, PORT);   
-    if (hostResolved == -1){
-        std::cout << "Failed to resolve the server host: " << SDLNet_GetError() << std::endl;
-    } else {// If we resolved the host successfully, output the details
-        // Get our IP address in proper dot-quad format by breaking up the 32-bit unsigned host address and splitting it into an array of four 8-bit unsigned numbers...
-        Uint8 * dotQuad = (Uint8*)&serverIP.host;
-
-        //... and then outputting them cast to integers. Then read the last 16 bits of the serverIP object to get the port number
-        std::cout << "Successfully resolved server host to IP: " << (unsigned short)dotQuad[0] << "." << (unsigned short)dotQuad[1] << "." << (unsigned short)dotQuad[2] << "." << (unsigned short)dotQuad[3];
-        std::cout << " port " << SDLNet_Read16(&serverIP.port) << std::endl;
-    }
-
-    serverSock = SDLNet_TCP_Open(&serverIP);
-
-    if ( serverSock == NULL ) {
-        fprintf(stderr, "Couldn't create socket: %s\n",SDLNet_GetError());
-        exit(-1);
-    }
-
-    SDLNet_TCP_AddSocket(socketSet, serverSock);
-
-    int activeSockets = 0;
-    std::cout << "about to loop...." << std::endl;
-    do {
-        //check activity of socket
-        activeSockets = SDLNet_CheckSockets(socketSet, 0);
-        if(activeSockets){
-            //this probably 
-            std::cout << "Server is active."  << std::endl; 
-        } else {
-            std::cout << "Awaiting connection..." <<std::endl;
+        idx+=1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        //receive a message from the client (listen)
+        //cout << "Awaiting client response..." << endl;
+        //memset(&msg, 0, sizeof(msg));//clear the buffer
+        //recv(newSd, (char*)&msg, sizeof(msg), 0);
+        /*
+        if(!strcmp(msg, "exit"))
+        {
+            cout << "Client has quit the session" << endl;
+            break;
         }
+        */
+        cout << msg << endl;
+        packet *  ptest = readPacket();
+        cout << "Client: " << ptest->a << endl;
+        cout << ">";
 
-        //establish connection
-        std::cout << "checking socket activity..." <<std::endl;
-        int serverSocketActivity = SDLNet_SocketReady(serverSock);
+        packet orange;
+        orange.a = idx;
+        orange.b = idx*2;
+        orange.c = idx*3;
 
-        std::cout << "checked activity: " << serverSocketActivity << std::endl;
+        memset(&msg, 0, sizeof(msg));
 
-        if (serverSocketActivity){
-            std::cout << "in loop" <<std::endl;
-            clientSock = SDLNet_TCP_Accept(serverSock);
-            std::cout << "created client socket" <<std::endl;
-            SDLNet_TCP_AddSocket(socketSet, clientSock);
-            std::string ok = "OK";
-            strcpy( buffer, ok.c_str());
-             std::cout << "copied string" <<std::endl;
-            SDLNet_TCP_Send(clientSock, (void *)buffer, strlen(buffer)+1); 
-            std::cout << "Connection established!" << std::cout;
-        }
-    } while (activeSockets < 1); //while a connection is not established
-    //start the game as player 1
+        //send(newSd, &orange, sizeof(orange), 0);
+        sendPacket(orange);
+    }
+    //we need to close the socket descriptors after we're all done
+    gettimeofday(&end1, NULL);
+    close(newSd);
+    close(serverSd);
+
 }
 
 void TutorialApplication::enterIP(void){
@@ -861,48 +949,66 @@ void TutorialApplication::enterIP(void){
 }
 
 void TutorialApplication::joinGame(void){
-    serverName = joinIP->getText().c_str();
-    std::cout << serverName << std::endl;
-    
-    socketSet = SDLNet_AllocSocketSet(1);
-    if (socketSet == NULL)
+    //we need 2 things: ip address and port number, in that order
+    isClient = true;
+    char *serverIp = "128.83.139.218";
+    //create a message buffer 
+    //setup a socket and connection tools 
+    struct hostent* host = gethostbyname(serverIp); 
+    sockaddr_in sendSockAddr;   
+    bzero((char*)&sendSockAddr, sizeof(sendSockAddr)); 
+    sendSockAddr.sin_family = AF_INET; 
+    sendSockAddr.sin_addr.s_addr = 
+        inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
+    sendSockAddr.sin_port = htons(port);
+    clientSd = socket(AF_INET, SOCK_STREAM, 0);
+    //try to connect...
+    int status = connect(clientSd,
+                         (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
+    if(status < 0)
     {
-        std::cout << "Failed to allocate the socket set: " << SDLNet_GetError() << "\n";
-        exit(-1); 
+        cout<<"Error connecting to socket!"<<endl;
     }
-     
-    int hostResolved = SDLNet_ResolveHost(&serverIP, serverName.c_str(), PORT);   
-    if (hostResolved == -1){
-        std::cout << "Failed to resolve the server host: " << SDLNet_GetError() << std::endl;
-    } else {// If we resolved the host successfully, output the details
-        // Get our IP address in proper dot-quad format by breaking up the 32-bit unsigned host address and splitting it into an array of four 8-bit unsigned numbers...
-        Uint8 * dotQuad = (Uint8*)&serverIP.host;
-
-        //... and then outputting them cast to integers. Then read the last 16 bits of the serverIP object to get the port number
-        std::cout << "Successfully resolved server host to IP: " << (unsigned short)dotQuad[0] << "." << (unsigned short)dotQuad[1] << "." << (unsigned short)dotQuad[2] << "." << (unsigned short)dotQuad[3];
-        std::cout << " port " << SDLNet_Read16(&serverIP.port) << std::endl;
+    cout << "Connected to the server!" << endl;
+    if(fcntl(clientSd, F_SETFL, fcntl(clientSd, F_GETFL) | O_NONBLOCK) < 0) {
+    // handle error
     }
+    struct timeval start1, end1;
+    gettimeofday(&start1, NULL);
+    idx = 0;
+    while(1)
+    {   
+        packet apple;
+        apple.a = idx;
+        apple.b = idx*2;
+        apple.c = idx*3;
+        idx+=1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
-    clientSock = SDLNet_TCP_Open(&serverIP);
-
-    if ( clientSock == NULL ) {
-        fprintf(stderr, "Couldn't create socket: %s\n",SDLNet_GetError());
-        exit(-1);
-    }
-
-    SDLNet_TCP_AddSocket(socketSet, clientSock);
-
-    //attempt to connect to server
-    int activeSockets = SDLNet_CheckSockets(socketSet, 5000);
-    int gotServerResponse = SDLNet_SocketReady(clientSock);
-    if (gotServerResponse){
-        int serverResposeByteCount = SDLNet_TCP_Recv(clientSock, buffer, 512);
-
-        if ( strcmp(buffer, "OK") == 0){
-            std::cout << "Connection accepted, joining game." << std::endl;
+        cout << ">";
+        string data;
+        data = std::to_string(idx);
+        //getline(cin, data);
+        
+        memset(&msg, 0, sizeof(msg));//clear the buffer
+        strcpy(msg, data.c_str());
+        if(data == "exit")
+        {
+            send(clientSd, (char*)&msg, strlen(msg), 0);
+            break;
         }
+        //send(clientSd, &apple, sizeof(apple), 0);
+        sendPacket(apple);
+
+        packet *  ptest = readPacket();
+        cout << "From Server: " << ptest->b << endl;
+        cout << ">";
     }
+    gettimeofday(&end1, NULL);
+    close(clientSd);
 }
+
+
 
 void TutorialApplication::pauseGame(){
     gameRunning=false;
