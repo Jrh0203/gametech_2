@@ -857,9 +857,8 @@ void TutorialApplication::hostGame(void){
     //grab the port number
     //buffer to send and receive messages with
     
-     
     //setup a socket and connection tools
-    sockaddr_in servAddr;
+    struct sockaddr_in servAddr;
     bzero((char*)&servAddr, sizeof(servAddr));
     servAddr.sin_family = AF_INET;
     servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -867,13 +866,12 @@ void TutorialApplication::hostGame(void){
  
     //open stream oriented socket with internet address
     //also keep track of the socket descriptor
-    int serverSd = socket(AF_INET, SOCK_STREAM, 0);
+    serverSd = socket(AF_INET, SOCK_STREAM, 0);
     if(serverSd < 0)
     {
         cerr << "Error establishing the server socket" << endl;
         exit(0);
     }
-    
     //bind the socket to its local address
     int bindStatus = bind(serverSd, (struct sockaddr*) &servAddr, 
         sizeof(servAddr));
@@ -884,11 +882,12 @@ void TutorialApplication::hostGame(void){
     }
     cout << "Waiting for a client to connect..." << endl;
     //listen for up to 5 requests at a time
-    listen(serverSd, 5);
-
-    FD_ZERO(&read_fds);
-    FD_SET(serverSd, &read_fds);
-    timeout.tv_sec = 0;  // 1s timeout
+    if(listen(serverSd, 5) < 0)
+    {
+        cout << "listen error" << endl;
+        exit(0);
+    }
+    timeout.tv_sec = 1;  // 1s timeout //needs to be at least 1 or it doesnt work
     timeout.tv_usec = 0;
     checkForConnection = true;
 }
@@ -908,7 +907,8 @@ void TutorialApplication::joinGame(void){
     //we need 2 things: ip address and port number, in that order
     isClient = true;
     cout << "Given IP address " << joinIP->getText() << endl;
-    char *serverIp = "128.83.139.218";
+    const char *serverIp = joinIP->getText().c_str();
+    //char *serverIp = "127.0.0.1";
     //create a message buffer 
     //setup a socket and connection tools 
     struct hostent* host = gethostbyname(serverIp);  
@@ -926,7 +926,7 @@ void TutorialApplication::checkJoinConnection(void){
                          (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
     if(status < 0)
     {
-        cout << "No host found" << endl;
+        //cout << "No host found" << endl;
         return;
     }
     cout << "Connected to the server!" << endl;
@@ -941,26 +941,30 @@ void TutorialApplication::checkJoinConnection(void){
 }
 
 void TutorialApplication::checkConnection(void){
-    int select_status = select(serverSd+1, &read_fds, NULL, NULL, &timeout);
+    timeout.tv_usec = 5;
+    FD_ZERO(&read_fds);
+    FD_SET(serverSd, &read_fds);
+    FD_ZERO(&write_fds);
+    FD_SET(serverSd, &write_fds);
+
+    int select_status = select(serverSd+1, &read_fds, &write_fds, NULL, &timeout);
     if(select_status == -1){
 
     }else if(select_status > 0){
+        cout << "Attempting to connect with client " << endl;
         //connection is ready
         //receive a request from client using accept
         //we need a new address to connect with the client
-        sockaddr_in newSockAddr;
-        socklen_t newSockAddrSize = sizeof(newSockAddr);
+        struct sockaddr_in newSockAddr;
+        int newSockAddrSize = sizeof(newSockAddr);
         //accept, create a new socket descriptor to 
         //handle the new connection with client
-
-        newSd = accept(serverSd, (sockaddr *)&newSockAddr, &newSockAddrSize);
+        newSd = accept(serverSd, (struct sockaddr *)&newSockAddr, (socklen_t*)&newSockAddrSize);
         if(newSd < 0)
         {
             cerr << "Error accepting request from client!" << endl;
             exit(1);
         }
-
-        cerr << "Error accepting request from client!" << endl;
         //Turn the socket to non blocking mode
         if(fcntl(serverSd, F_SETFL, fcntl(serverSd, F_GETFL) | O_NONBLOCK) < 0) {
         // handle error

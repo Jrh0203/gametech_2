@@ -297,6 +297,7 @@ protected:
     bool checkForConnection = false;
     bool checkForClientConnection = false;
     fd_set read_fds;
+    fd_set write_fds;
     struct timeval timeout;
     int serverSd;
     sockaddr_in sendSockAddr;  
