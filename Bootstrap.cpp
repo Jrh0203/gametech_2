@@ -67,8 +67,8 @@ struct ScoreCallback : public btCollisionWorld::ContactResultCallback
         //     Mix_PlayChannel(-1, context->wBounce, 0);
         //    // context->ballTrigger = 3;
         // }
-        if (context->scoreDelay<0){
-            context->updateScore(player);
+        if (context->scoreDelay<0 && !(context->isClient)){
+            context->increaseScore(player);
             context->scoreDelay=100;
         }
         
@@ -96,7 +96,9 @@ struct PaddleCallback : public btCollisionWorld::ContactResultCallback
             Mix_PlayChannel(-1, context->wPaddleHit, 0);
         }
         context->ballTrigger = context->delay;
-        context->checkColor(paddle);
+        if (!context->isClient){
+            context->checkColor(paddle);
+        }
     }
 
     TutorialApplication* context;
@@ -164,6 +166,7 @@ TutorialApplication::TutorialApplication()
   soundEnabled=true;
   musicEnabled=true;
   fireworksOn=false;
+  singleplayerBool = false;
 
   delay = 15;
   scoreDelay = 15;
@@ -463,7 +466,7 @@ void TutorialApplication::setupGUI(){
         singleplayer->setSize(CEGUI::USize(CEGUI::UDim(0.20, 0), CEGUI::UDim(0.10, 0)));
         singleplayer->setText("Singleplayer");
         singleplayer->subscribeEvent(CEGUI::PushButton::EventClicked, 
-        CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
+        CEGUI::SubscriberSlot(&TutorialApplication::setSingleplayer, this));
         selectGameSheet->addChild(singleplayer);
         
         CEGUI::Window *host= wmgr.createWindow("TaharezLook/Button", "CEGUIDemo/QuitButton");
@@ -738,34 +741,26 @@ void TutorialApplication::checkColor(int player){
 
     if (player){
         if (paddle1->getColor() != ball->getColor()){
-            updateScore(player);
+            increaseScore(player);
         }
      
     } else {
         if (paddle2->getColor() != ball->getColor()){
-        updateScore(player);
+            increaseScore(player);
         }
     }
 
 }
 
-void TutorialApplication::updateScore(int player){
-    reset();
-
-    if (player){
-        opponentScore++;
-    } else {
-        playerScore++;
-    }
-
+void TutorialApplication::updateScore(){
     scoreBoard->setText(getScoreBoardText());
 
     if (playerScore == 7 || opponentScore == 7){
         //gameover
 
-        std::string winner = (playerScore == 7) ? "Player 1" : "Player 2";
+        std::string result = (playerScore == 7) ? "Victory" : "Defeat";
 
-        victoryText->setText(winner + " wins!");
+        victoryText->setText(result);
 
         if (playerScore == 7 && soundEnabled){
             Mix_PlayChannel(-1, wVictory, 0);
@@ -779,13 +774,30 @@ void TutorialApplication::updateScore(int player){
 
 }
 
+void TutorialApplication::increaseScore(int player){
+   reset();
+
+ if (player){
+        opponentScore++;
+    } else {
+        playerScore++;
+    }
+    updateScore();
+}
+
 void TutorialApplication::reset(void){
     explode(ball->node->getPosition());
     ball->reset();
     ball->randomizeColor();
-    paddle2->opponentChangeColor(ball->getColor());
-    paddle1->clearForce();
-    paddle2->speed=20;
+
+    if (singleplayerBool){
+        paddle2->opponentChangeColor(ball->getColor());
+        paddle2->speed=20;
+    }
+
+    else {
+        paddle1->clearForce();
+    }
 }
 
 void TutorialApplication::selectGameType(){
@@ -808,7 +820,10 @@ void TutorialApplication::newGame(void){
     opponentScore = 0;
 
     scoreBoard->setText(getScoreBoardText());
-    paddle2->opponentChangeColor(ball->getColor());
+
+    if (singleplayerBool){
+        paddle2->opponentChangeColor(ball->getColor());
+    }
     ball->push();
 }
 void TutorialApplication::sendPacket(TutorialApplication::packet packet){
@@ -853,7 +868,9 @@ TutorialApplication::packet* TutorialApplication::readFromSocket(int socket){
     return (packet*)(&msg);
 }
 
-void TutorialApplication::hostGame(void){   
+void TutorialApplication::hostGame(void){  
+    //this needs to run on a different thread
+
     //grab the port number
     //buffer to send and receive messages with
     
@@ -891,6 +908,7 @@ void TutorialApplication::hostGame(void){
     timeout.tv_usec = 0;
     checkForConnection = true;
 }
+
 
 void TutorialApplication::enterIP(void){
     joinIP->setVisible(true);
@@ -984,6 +1002,11 @@ void TutorialApplication::checkConnection(void){
     }
 }
 
+void TutorialApplication::setSingleplayer(){
+    singleplayerBool = true;
+    newGame();
+}
+
 
 
 void TutorialApplication::pauseGame(){
@@ -999,7 +1022,6 @@ void TutorialApplication::resumeGame(){
 }
 
 std::string TutorialApplication::getScoreBoardText(void){
-
     std::stringstream stream;
 
     stream << "Player: " << playerScore <<
@@ -1025,7 +1047,7 @@ bool TutorialApplication::keyPressed(const OIS::KeyEvent &arg)
       case OIS::KC_RIGHT: keys[7]=true; break;
       case OIS::KC_R: reset(); break;
       case OIS::KC_SPACE: ball->push(); paddle2->opponentChangeColor(ball->getColor()); break;
-      case OIS::KC_K: paddle1->changeColor(); break;
+      case OIS::KC_K: paddle1->changeColor(1); break;
       case OIS::KC_F: startFireworks(); break;
       case OIS::KC_T: explode(Ogre::Vector3()); break;
       //case OIS::KC_G: clang(ball->node->getPosition()); break;
@@ -1081,15 +1103,12 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         }
 
     //paddle auto move
-    /*
-    if (paddle2 && ball){
-        paddle2->updatePosition(ball->getNode()->getPosition());
-    }
-    */
+    
+    
 
 
         //ball switches colors when it crosses center of gamefield
-        if ((int)ball->getNode()->getPosition().z == 0){
+        if (singleplayerBool && gameRunning && (int)ball->getNode()->getPosition().z == 0){
             //ball->randomizeColor();
             paddle2->opponentChangeColor(ball->getColor());
 
@@ -1160,6 +1179,10 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         }
     }
 
+    if (singleplayerBool && paddle2 && ball){
+        paddle2->updatePosition(ball->getNode()->getPosition());
+    } else {
+
     if(checkForConnection){
         checkConnection();
     }else if(checkForClientConnection){
@@ -1174,18 +1197,28 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         p.paddleColor = paddle1->color;
         p.ballPos = ball->node->getPosition();
         p.ballColor = ball->color;
-
+        p.myScore = playerScore;
+        p.opScore = opponentScore;
+        
         sendPacket(p);
 
 
         packet *  ptest = readPacket();
         if (ptest->valid){
+            //update enemy paddle
             paddle2->movePaddleLocation(ptest->paddlePos);
             paddle2->changeColor(ptest->paddleColor);
-            ball->setColor(ptest->ballColor);
-            if (isClient)
+
+            //if this is the client, update ball and score to match server
+            if (isClient){
+                ball->setColor(ptest->ballColor);
                 ball->moveBallLocation(ptest->ballPos);
+                playerScore = ptest->opScore;
+                opponentScore = ptest->myScore;
+                updateScore();
+            }
         }
+    }
     }
 
     return true;

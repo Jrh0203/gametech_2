@@ -105,7 +105,8 @@ public:
     ~TutorialApplication(void);
 
     void go(void);
-    void updateScore(int player);
+    void updateScore(void);
+    void increaseScore(int player);
     void checkColor(int player);
 
 
@@ -113,6 +114,8 @@ public:
     Mix_Chunk *wPaddleHit;
     bool soundEnabled;
     bool musicEnabled;
+
+    bool isClient = false;
 
     Paddle *paddle1;
     Paddle *paddle2;
@@ -133,6 +136,8 @@ public:
         int paddleColor;
         Ogre::Vector3 ballPos;
         int ballColor;
+        int myScore;
+        int opScore;
     };
 
 protected:
@@ -186,14 +191,13 @@ protected:
     void sendToSocket(packet, int socket);
     void checkConnection(void);
     void checkJoinConnection(void);
+    void setSingleplayer(void);
 
 
     packet* readPacket();
     packet* readAsClient();
     packet* readAsServer();
     packet* readFromSocket(int socket);
-
-    bool isClient = false;
 
 
     // Adjust mouse clipping area
@@ -248,6 +252,7 @@ protected:
     int opponentScore;
 
     bool gameRunning;
+    bool singleplayerBool;
 
     //GUI
     CEGUI::OgreRenderer* mRenderer;

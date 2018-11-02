@@ -46,7 +46,7 @@ public:
 	void moveBallLocation(Ogre::Vector3 ballPos){
 		btTransform transform;
 		transform = body->getWorldTransform();
-		transform.setOrigin(btVector3(ballPos.x, ballPos.y, -ballPos.z));
+		transform.setOrigin(btVector3(-ballPos.x, ballPos.y, -ballPos.z));
 		body->setWorldTransform(transform);
 		body->getMotionState()->setWorldTransform(transform);
 	}

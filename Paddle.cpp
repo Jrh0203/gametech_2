@@ -52,7 +52,7 @@ public:
  
 	~Paddle(){}
 
-	void changeColor(int newColor = 0){
+	void changeColor(int newColor){
 		color = newColor;
 
 		//0 Blue, 1 Red, 2 Green for now
@@ -129,7 +129,7 @@ public:
 	void movePaddleLocation(Ogre::Vector3 paddlePos){
 		btTransform transform;
 		transform = body->getWorldTransform();
-		transform.setOrigin(btVector3(paddlePos.x, paddlePos.y, -40));
+		transform.setOrigin(btVector3(-paddlePos.x, paddlePos.y, -40));
 		body->setWorldTransform(transform);
 		body->getMotionState()->setWorldTransform(transform);
 	}
