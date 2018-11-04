@@ -1281,9 +1281,13 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
         packet p;
         p.valid = true;
-        p.paddlePos = paddle1->node->getPosition();
+        btTransform transform = paddle1->body->getWorldTransform();
+        p.paddlePos = Ogre::Vector3(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
+        //p.paddlePos = paddle1->node->getPosition();
         p.paddleColor = paddle1->color;
-        p.ballPos = ball->getNode()->getPosition();
+        transform = ball->body->getWorldTransform();
+        p.ballPos = Ogre::Vector3(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
+        //p.ballPos = ball->getNode()->getPosition();
         p.ballColor = ball->color;
         p.myScore = playerScore;
         p.opScore = opponentScore;
