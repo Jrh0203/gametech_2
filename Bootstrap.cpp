@@ -774,8 +774,12 @@ void TutorialApplication::updateScore(){
         gameRunning = false;
 
         //game over, end connection
-        if (!singleplayerBool && !isClient){
+        if (!singleplayerBool) {
+            if (!isClient){
             signalEndConnection();
+            close(newSd);
+            close(serverSd);
+            } 
         }
     }
 
@@ -806,6 +810,7 @@ void TutorialApplication::endConnection(){
      cout << "Ending connection" << endl;
     //both players acknowledged game is over, end for good
     if (!isClient){
+       // exit();
          cout << "Closing server" << endl;
     int i = close(newSd);
     int j = close(serverSd);
@@ -882,7 +887,7 @@ void TutorialApplication::newGame(void){
 
     if (singleplayerBool){
         paddle2->opponentChangeColor(ball->getColor());
-    }
+    } 
 
     if (singleplayerBool || !isClient){
         ball->push();
@@ -905,11 +910,12 @@ void TutorialApplication::sendToServer(TutorialApplication::packet packet){
 }
 
 void TutorialApplication::sendToSocket(TutorialApplication::packet packet, int socket){
-    int i = send(socket, &packet, sizeof(packet), 0);
+    int i = send(socket, &packet, sizeof(packet), MSG_NOSIGNAL);
 
+    /*
     if (i == -1){
         cout << "Error sending packet" << endl;
-    }
+    }*/
 }
 
 TutorialApplication::packet* TutorialApplication::readPacket(){
@@ -932,16 +938,18 @@ TutorialApplication::packet* TutorialApplication::readFromSocket(int socket){
     memset(&msg, 0, sizeof(msg));//clear the buffer
     int i = recv(socket, (char*)&msg, sizeof(msg), 0);
 
+    /*
     if (i == -1){
         cout << "Error: packet not recieved" << endl;
     } else if (i == 0){
-        cout << "Peer shutdown?" << endl;
-    }
+        //cout << "Peer shutdown?" << endl;
+    }*/
 
     return (packet*)(&msg);
 }
 
 void TutorialApplication::hostGame(void){  
+    if (!checkForConnection && !checkForClientConnection){
     singleplayerBool = false;
     //this needs to run on a different thread
 
@@ -978,9 +986,10 @@ void TutorialApplication::hostGame(void){
         cout << "listen error" << endl;
         exit(0);
     }
-    timeout.tv_sec = 1;  // 1s timeout //needs to be at least 1 or it doesnt work
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 0;  // 1s timeout //needs to be at least 1 or it doesnt work
+    timeout.tv_usec = 50;
     checkForConnection = true;
+    } 
 }
 
 
@@ -996,6 +1005,7 @@ void TutorialApplication::clearIP(void){
 }
 
 void TutorialApplication::joinGame(void){
+    if (!checkForConnection && !checkForClientConnection){
     //we need 2 things: ip address and port number, in that order
     singleplayerBool = false;
     isClient = true;
@@ -1010,6 +1020,7 @@ void TutorialApplication::joinGame(void){
     sendSockAddr.sin_port = htons(port);
     clientSd = socket(AF_INET, SOCK_STREAM, 0);
     checkForClientConnection = true;
+    }
 }
 
 void TutorialApplication::checkJoinConnection(void){
@@ -1299,12 +1310,8 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
                 if (ptest->dc){
                     //disconnect
-                    signalEndConnection();
+                    close(clientSd);
                 }
-            }
-
-            if (ptest->dc){
-                endConnection();
             }
         }
     }
