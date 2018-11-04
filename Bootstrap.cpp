@@ -166,7 +166,6 @@ TutorialApplication::TutorialApplication()
   soundEnabled=true;
   musicEnabled=true;
   fireworksOn=false;
-  singleplayerBool = false;
 
   delay = 15;
   scoreDelay = 15;
@@ -542,7 +541,7 @@ void TutorialApplication::setupGUI(){
         playAgain->setSize(CEGUI::USize(CEGUI::UDim(0.2, 0), CEGUI::UDim(0.1, 0)));
         restartSheet->addChild(playAgain);
         playAgain->subscribeEvent(CEGUI::PushButton::EventClicked, 
-            CEGUI::SubscriberSlot(&TutorialApplication::newGame, this));
+            CEGUI::SubscriberSlot(&TutorialApplication::selectGameType, this));
 
 
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(menuSheet);
@@ -762,17 +761,73 @@ void TutorialApplication::updateScore(){
 
         victoryText->setText(result);
 
-        if (playerScore == 7 && soundEnabled){
-            Mix_PlayChannel(-1, wVictory, 0);
+        if (playerScore == 7){ 
             startFireworks();
+            
+            if (soundEnabled){
+                Mix_PlayChannel(-1, wVictory, 0);
+            }
         }
 
         CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show();
         CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(restartSheet);
         gameRunning = false;
+
+        //game over, end connection
+        if (!singleplayerBool && !isClient){
+            signalEndConnection();
+        }
     }
 
 }
+
+void TutorialApplication::signalEndConnection(){
+     cout << "Signal close sockets" << endl;
+    
+    //server send game over packet
+    packet pGG;
+
+    pGG.valid = true;
+    pGG.paddlePos = paddle1->node->getPosition();
+    pGG.paddleColor = paddle1->color;
+    pGG.ballPos = ball->getNode()->getPosition();
+    pGG.ballColor = ball->color;
+    pGG.myScore = playerScore;
+    pGG.opScore = opponentScore;
+    pGG.ballForce = ball->getRigidBody()->getLinearVelocity();
+    pGG.dc = true;
+        
+    sendPacket(pGG);
+
+    cout << "Sent packet" << endl;
+}
+
+void TutorialApplication::endConnection(){
+     cout << "Ending connection" << endl;
+    //both players acknowledged game is over, end for good
+    if (!isClient){
+         cout << "Closing server" << endl;
+    int i = close(newSd);
+    int j = close(serverSd);
+
+        if (i){
+            cout << "Unable to close socket: " << i << endl;
+        }
+    } else {
+        cout << "Closing client" << endl;
+        int i = close(clientSd);
+
+        if (i){
+            cout << "Unable to close socket: " << i << endl;
+        } 
+        isClient = false;
+    }
+
+    cout << "Done closing sockets" << endl;
+    singleplayerBool = true;
+
+}
+
 
 void TutorialApplication::increaseScore(int player){
    reset();
@@ -801,6 +856,10 @@ void TutorialApplication::reset(void){
 }
 
 void TutorialApplication::selectGameType(){
+     if (fireworksOn){
+        startFireworks(); //turn the fireworks off if they are running
+    }
+
     CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow(selectGameSheet);
     selectGameSheet->setMousePassThroughEnabled(true); // this is important!
 }
@@ -824,7 +883,10 @@ void TutorialApplication::newGame(void){
     if (singleplayerBool){
         paddle2->opponentChangeColor(ball->getColor());
     }
-    ball->push();
+
+    if (singleplayerBool || !isClient){
+        ball->push();
+    }
 }
 void TutorialApplication::sendPacket(TutorialApplication::packet packet){
     if (!isClient){
@@ -843,7 +905,11 @@ void TutorialApplication::sendToServer(TutorialApplication::packet packet){
 }
 
 void TutorialApplication::sendToSocket(TutorialApplication::packet packet, int socket){
-    send(socket, &packet, sizeof(packet), 0);
+    int i = send(socket, &packet, sizeof(packet), 0);
+
+    if (i == -1){
+        cout << "Error sending packet" << endl;
+    }
 }
 
 TutorialApplication::packet* TutorialApplication::readPacket(){
@@ -864,11 +930,19 @@ TutorialApplication::packet* TutorialApplication::readAsServer(){
 
 TutorialApplication::packet* TutorialApplication::readFromSocket(int socket){
     memset(&msg, 0, sizeof(msg));//clear the buffer
-    recv(socket, (char*)&msg, sizeof(msg), 0);
+    int i = recv(socket, (char*)&msg, sizeof(msg), 0);
+
+    if (i == -1){
+        cout << "Error: packet not recieved" << endl;
+    } else if (i == 0){
+        cout << "Peer shutdown?" << endl;
+    }
+
     return (packet*)(&msg);
 }
 
 void TutorialApplication::hostGame(void){  
+    singleplayerBool = false;
     //this needs to run on a different thread
 
     //grab the port number
@@ -923,11 +997,10 @@ void TutorialApplication::clearIP(void){
 
 void TutorialApplication::joinGame(void){
     //we need 2 things: ip address and port number, in that order
+    singleplayerBool = false;
     isClient = true;
     cout << "Given IP address " << joinIP->getText() << endl;
     const char *serverIp = joinIP->getText().c_str();
-    //char *serverIp = "127.0.0.1";
-    //create a message buffer 
     //setup a socket and connection tools 
     struct hostent* host = gethostbyname(serverIp);  
     bzero((char*)&sendSockAddr, sizeof(sendSockAddr)); 
@@ -944,12 +1017,12 @@ void TutorialApplication::checkJoinConnection(void){
                          (sockaddr*) &sendSockAddr, sizeof(sendSockAddr));
     if(status < 0)
     {
-        //cout << "No host found" << endl;
+        cout << "No host found" << endl;
         return;
     }
     cout << "Connected to the server!" << endl;
     if(fcntl(clientSd, F_SETFL, fcntl(clientSd, F_GETFL) | O_NONBLOCK) < 0) {
-    // handle error
+         cout << "Error! - line 1010" << endl;
     }
     struct timeval start1, end1;
     gettimeofday(&start1, NULL);
@@ -985,7 +1058,7 @@ void TutorialApplication::checkConnection(void){
         }
         //Turn the socket to non blocking mode
         if(fcntl(serverSd, F_SETFL, fcntl(serverSd, F_GETFL) | O_NONBLOCK) < 0) {
-        // handle error
+            cerr << "Error line 1047" << endl;
         }
 
         cout << "Connected with client!" << endl;
@@ -1179,8 +1252,10 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         }
     }
 
-    if (singleplayerBool && paddle2 && ball){
+    if (singleplayerBool){
+        if (paddle2 && ball){
         paddle2->updatePosition(ball->getNode()->getPosition());
+        }
     } else {
 
     if(checkForConnection){
@@ -1189,16 +1264,20 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
         checkJoinConnection();
     }else{
 
+        //check if socket dc'd
+
         idx+=1;
 
         packet p;
         p.valid = true;
         p.paddlePos = paddle1->node->getPosition();
         p.paddleColor = paddle1->color;
-        p.ballPos = ball->node->getPosition();
+        p.ballPos = ball->getNode()->getPosition();
         p.ballColor = ball->color;
         p.myScore = playerScore;
         p.opScore = opponentScore;
+        p.ballForce = ball->getRigidBody()->getLinearVelocity();
+        p.dc = false;
         
         sendPacket(p);
 
@@ -1213,9 +1292,19 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
             if (isClient){
                 ball->setColor(ptest->ballColor);
                 ball->moveBallLocation(ptest->ballPos);
+                ball->setLinearVelocity(ptest->ballForce);
                 playerScore = ptest->opScore;
                 opponentScore = ptest->myScore;
                 updateScore();
+
+                if (ptest->dc){
+                    //disconnect
+                    signalEndConnection();
+                }
+            }
+
+            if (ptest->dc){
+                endConnection();
             }
         }
     }

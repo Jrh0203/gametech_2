@@ -90,4 +90,8 @@ public:
 			ent->setMaterialName("ball/Green");
 	}
 
+	void setLinearVelocity(btVector3 v){
+		body->setLinearVelocity( btVector3(- (int)(v.x()), (int) v.y(), - (int) (v.z())));
+	}
+
 };

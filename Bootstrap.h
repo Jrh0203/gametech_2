@@ -138,6 +138,8 @@ public:
         int ballColor;
         int myScore;
         int opScore;
+        btVector3 ballForce;
+        bool dc;
     };
 
 protected:
@@ -192,6 +194,8 @@ protected:
     void checkConnection(void);
     void checkJoinConnection(void);
     void setSingleplayer(void);
+    void signalEndConnection(void);
+    void endConnection(void);
 
 
     packet* readPacket();
@@ -252,7 +256,7 @@ protected:
     int opponentScore;
 
     bool gameRunning;
-    bool singleplayerBool;
+    bool singleplayerBool = true;
 
     //GUI
     CEGUI::OgreRenderer* mRenderer;
