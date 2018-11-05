@@ -122,8 +122,11 @@ public:
 
 		}
 
+
+
 		body->setWorldTransform(transform);
 		body->getMotionState()->setWorldTransform(transform);	
+		body->setLinearVelocity(btVector3(0, 0, 0));
 	}
 
 	void movePaddleLocation(Ogre::Vector3 paddlePos){

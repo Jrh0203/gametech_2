@@ -297,7 +297,7 @@ protected:
     int clientSd;
     int idx = 0;
     bool connected = false;
-    int port = 1234;
+    int port = 55555;
     char msg[sizeof(packet)*10];
 
     SDLNet_SocketSet socketSet;
