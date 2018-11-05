@@ -653,8 +653,6 @@ void TutorialApplication::explode(Ogre::Vector3 pos){
             Mix_PlayChannel(-1, wExplode, 0);
         }
     }
-    
-    
 
     mSceneMgr->destroyParticleSystem("Explode");
     ballParticle = mSceneMgr->createParticleSystem("Explode", "OOB");
@@ -752,6 +750,11 @@ void TutorialApplication::checkColor(int player){
 }
 
 void TutorialApplication::updateScore(){
+
+    // if (isClient){
+    //     explode(ball->node->getPosition());
+    // }
+
     scoreBoard->setText(getScoreBoardText());
 
     if (playerScore == 7 || opponentScore == 7){
@@ -1305,12 +1308,17 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
 
             //if this is the client, update ball and score to match server
             if (isClient){
-                ball->setColor(ptest->ballColor);
-                ball->moveBallLocation(ptest->ballPos);
-                ball->setLinearVelocity(ptest->ballForce);
+                if (ptest->opScore != playerScore || ptest->myScore != opponentScore){
+                    cout << "score changed"<< endl;                    
+                    explode(ball->node->getPosition());
+                }
+            
                 playerScore = ptest->opScore;
                 opponentScore = ptest->myScore;
                 updateScore();
+                ball->setColor(ptest->ballColor);
+                ball->moveBallLocation(ptest->ballPos);
+                ball->setLinearVelocity(ptest->ballForce);
 
                 if (ptest->dc){
                     //disconnect
