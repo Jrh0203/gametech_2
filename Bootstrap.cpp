@@ -789,7 +789,6 @@ void TutorialApplication::updateScore(){
 }
 
 void TutorialApplication::signalEndConnection(){
-     cout << "Signal close sockets" << endl;
     
     //server send game over packet
     packet pGG;
@@ -805,8 +804,6 @@ void TutorialApplication::signalEndConnection(){
     pGG.dc = true;
         
     sendPacket(pGG);
-
-    cout << "Sent packet" << endl;
 }
 
 void TutorialApplication::endConnection(){
@@ -814,7 +811,6 @@ void TutorialApplication::endConnection(){
     //both players acknowledged game is over, end for good
     if (!isClient){
        // exit();
-         cout << "Closing server" << endl;
     int i = close(newSd);
     int j = close(serverSd);
 
@@ -822,7 +818,6 @@ void TutorialApplication::endConnection(){
             cout << "Unable to close socket: " << i << endl;
         }
     } else {
-        cout << "Closing client" << endl;
         int i = close(clientSd);
 
         if (i){
@@ -831,7 +826,6 @@ void TutorialApplication::endConnection(){
         isClient = false;
     }
 
-    cout << "Done closing sockets" << endl;
     singleplayerBool = true;
 
 }
@@ -914,11 +908,6 @@ void TutorialApplication::sendToServer(TutorialApplication::packet packet){
 
 void TutorialApplication::sendToSocket(TutorialApplication::packet packet, int socket){
     int i = send(socket, &packet, sizeof(packet), MSG_NOSIGNAL);
-
-    /*
-    if (i == -1){
-        cout << "Error sending packet" << endl;
-    }*/
 }
 
 TutorialApplication::packet* TutorialApplication::readPacket(){
@@ -940,14 +929,6 @@ TutorialApplication::packet* TutorialApplication::readAsServer(){
 TutorialApplication::packet* TutorialApplication::readFromSocket(int socket){
     memset(&msg, 0, sizeof(msg));//clear the buffer
     int i = recv(socket, (char*)&msg, sizeof(msg), 0);
-
-    /*
-    if (i == -1){
-        cout << "Error: packet not recieved" << endl;
-    } else if (i == 0){
-        //cout << "Peer shutdown?" << endl;
-    }*/
-
     return (packet*)(&msg);
 }
 
@@ -1036,7 +1017,7 @@ void TutorialApplication::checkJoinConnection(void){
     }
     cout << "Connected to the server!" << endl;
     if(fcntl(clientSd, F_SETFL, fcntl(clientSd, F_GETFL) | O_NONBLOCK) < 0) {
-         cout << "Error! - line 1010" << endl;
+       cout << "Error" << endl;
     }
     struct timeval start1, end1;
     gettimeofday(&start1, NULL);
@@ -1083,8 +1064,7 @@ void TutorialApplication::checkConnection(void){
         //also keep track of the amount of data sent as well
         newGame();
     }else{
-        //no connection still
-        //cout << "No connection yet" << endl;
+       
         return;
     }
 }
@@ -1309,7 +1289,7 @@ bool TutorialApplication::frameRenderingQueued(const Ogre::FrameEvent& evt ){
             //if this is the client, update ball and score to match server
             if (isClient){
                 if (ptest->opScore != playerScore || ptest->myScore != opponentScore){
-                    cout << "score changed"<< endl;                    
+                           
                     explode(ball->node->getPosition());
                 }
             
